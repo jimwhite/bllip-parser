@@ -19,13 +19,22 @@
 #
 # The following high-level goals may also be useful:
 #
-# make nbestrain-clean # removes temporary files used in nbesttrain
+# make nbesttrain-clean # removes temporary files used in nbesttrain
 # make nbest-oracle    # oracle evaluation of n-best results 
 # make features        # extracts features from 20-fold parses
 # make train-reranker  # trains reranker model
 # make train-clean     # removes all temporary files used in training
 #
 # I typically run nbesttrain to produce the n-best parses 
+
+# jimwhite: 
+# This Makefile has been tweaked for Condor on Patas.
+# The way I run the initial build steps is:
+#
+# condor_run "make && make reranker" >make_out.txt
+# echo $?
+# tail make_out.txt
+#
 
 # To run 2 jobs in parallel (e.g. on a multiprocessor) run, e.g.,
 #
@@ -57,10 +66,27 @@
 #
 # GCCFLAGS = -march=native -mfpmath=sse -msse2 -mmmx -m32
 
+# GCCFLAGS = -march=x86_64 -mfpmath=sse -msse2 -mssse3 -mmmx -m64
+
+# Must use export because otherwise second-stage/programs/wlle/Makefile doesn't get the message.
+
+GCCFLAGS = -m64 -march=core2 -mfpmath=sse
+export GCCFLAGS
+
+# CC = condor_compile gcc
+CC = gcc
+export CC
+
+# CXX = condor_compile g++
+CXX = g++
+export CXX
+
 # CFLAGS is used for all C and C++ compilation
 #
 CFLAGS = -MMD -O6 -Wall -ffast-math -finline-functions -fomit-frame-pointer -fstrict-aliasing $(GCCFLAGS)
 LDFLAGS = $(GCCLDFLAGS)
+EXEC_JOB = condor_run
+#EXEC_JOB = time
 EXEC = time
 
 # for debugging, uncomment the following CFLAGS, LDFLAGS and EXEC
@@ -82,7 +108,8 @@ export LDFLAGS
 #
 # PENNWSJTREEBANK must be set to the base directory of the Penn WSJ Treebank
 #
-PENNWSJTREEBANK=/usr/local/data/Penn3/parsed/mrg/wsj/
+# PENNWSJTREEBANK=/usr/local/data/Penn3/parsed/mrg/wsj/
+PENNWSJTREEBANK=/corpora/LDC/LDC99T42/RAW/parsed/mrg/wsj
 
 # NPARSES is the number of alternative parses to consider for each sentence
 #
@@ -309,14 +336,18 @@ NBESTDIR=second-stage/nbest/$(NBESTPARSERNICKNAME)$(NPARSES)
 #
 NBESTFILES= $(foreach fold,$(FOLDS),$(NBESTDIR)/fold$(fold).gz) $(foreach section,$(SECTIONS),$(NBESTDIR)/section$(section).gz)
 
+.PHONY: nbest-files
+nbest-files: $(NBESTFILES) 
+	echo $(NBESTFILES)
+
 .PHONY: nbesttrain
 nbesttrain: $(NBESTFILES) PARSE TRAIN second-stage/programs/prepare-data/ptb
 
 # This goal copies and gzips the output of the n-best parser
 # into the appropriate directory for training the reranker.
 #
-# .PRECIOUS: $(NBESTDIR)/fold%.gz
-.INTERMEDIATE: $(NBESTDIR)/fold%.gz
+.PRECIOUS: $(NBESTDIR)/fold%.gz
+#.INTERMEDIATE: $(NBESTDIR)/fold%.gz
 $(NBESTDIR)/fold%.gz: $(TMP)/fold%/$(NBESTPARSERNICKNAME)$(NPARSES)best
 	mkdir -p $(NBESTDIR)
 	gzip -c $+ > $@
@@ -325,50 +356,57 @@ $(NBESTDIR)/fold%.gz: $(TMP)/fold%/$(NBESTPARSERNICKNAME)$(NPARSES)best
 # with the n-best parser to produce the folds for training the
 # reranker.
 
-.INTERMEDIATE: $(TMP)/fold%/$(NBESTPARSERNICKNAME)$(NPARSES)best
+.PRECIOUS: $(TMP)/fold%/$(NBESTPARSERNICKNAME)$(NPARSES)best
+#.INTERMEDIATE: $(TMP)/fold%/$(NBESTPARSERNICKNAME)$(NPARSES)best
 $(TMP)/fold%/$(NBESTPARSERNICKNAME)$(NPARSES)best: $(TMP)/fold%/DATA $(TMP)/fold%/yield $(NBESTPARSER)
-	$(EXEC) $(NBESTPARSER) -l400 -K -N$(NPARSES) $(@D)/DATA/ $(@D)/yield > $@
+	$(EXEC_JOB) "$(NBESTPARSER) -l400 -K -N$(NPARSES) $(@D)/DATA/ $(@D)/yield > $@"
 
-.INTERMEDIATE: $(TMP)/fold%/DATA
+.PRECIOUS: $(TMP)/fold%/DATA
+#.INTERMEDIATE: $(TMP)/fold%/DATA
 $(TMP)/fold%/DATA: $(TMP)/fold%/train $(TMP)/fold%/dev $(NBESTTRAINER)
 	mkdir -p $@
 	LC_COLLATE=C; cp $(NBESTPARSERBASEDIR)/DATA/EN/[a-z]* $@
-	$(EXEC) $(NBESTTRAINER) $@ $(@D)/train $(@D)/dev
+	$(EXEC_JOB) "$(NBESTTRAINER) "$@" $(@D)/train $(@D)/dev"
 
-.INTERMEDIATE: $(TMP)/fold%/train
+.PRECIOUS: $(TMP)/fold%/train
+#.INTERMEDIATE: $(TMP)/fold%/train
 $(TMP)/fold%/train: second-stage/programs/prepare-data/ptb
 	mkdir -p $(@D)
-	$(EXEC) second-stage/programs/prepare-data/ptb -n $(NFOLDS) -x $(patsubst $(TMP)/fold%,%,$(@D)) -e $(TRAIN)  > $@
+	$(EXEC_JOB) "second-stage/programs/prepare-data/ptb -n $(NFOLDS) -x $(patsubst $(TMP)/fold%,%,$(@D)) -e $(TRAIN)  > $@"
 
-.INTERMEDIATE: $(TMP)/fold%/dev
+.PRECIOUS: $(TMP)/fold%/dev
+#.INTERMEDIATE: $(TMP)/fold%/dev
 $(TMP)/fold%/dev: second-stage/programs/prepare-data/ptb
 	mkdir -p $(@D)
-	second-stage/programs/prepare-data/ptb -n $(NFOLDS) -i $(patsubst $(TMP)/fold%,%,$(@D)) -e $(TRAIN)  > $@
+	$(EXEC_JOB) "second-stage/programs/prepare-data/ptb -n $(NFOLDS) -i $(patsubst $(TMP)/fold%,%,$(@D)) -e $(TRAIN)  > $@"
 
 # $(TMP)/fold%/DATA: $(TMP)/%/train $(TMP)/%/dev
 # 	mkdir -p $@
 # 	LC_COLLATE=C; cp $(NBESTPARSERBASEDIR)/DATA/EN/[a-z]* $@
 # 	$(NBESTPARSERBASEDIR)/TRAIN/allScript $@ $(@D)/train $(@D)/dev
 
+#.PRECIOUS: $(TMP)/fold%/yield
 .INTERMEDIATE: $(TMP)/fold%/yield
 $(TMP)/fold%/yield: second-stage/programs/prepare-data/ptb
 	mkdir -p $(@D)
-	$(EXEC) second-stage/programs/prepare-data/ptb -n $(NFOLDS) -i $(patsubst $(TMP)/fold%,%,$(@D)) -c $(TRAIN) > $@
+	$(EXEC_JOB) "second-stage/programs/prepare-data/ptb -n $(NFOLDS) -i $(patsubst $(TMP)/fold%,%,$(@D)) -c $(TRAIN) > $@"
 
-# .PRECIOUS: $(NBESTDIR)/section%.gz
-.INTERMEDIATE: $(NBESTDIR)/section%.gz
+.PRECIOUS: $(NBESTDIR)/section%.gz
+#.INTERMEDIATE: $(NBESTDIR)/section%.gz
 $(NBESTDIR)/section%.gz: $(TMP)/section%/$(NBESTPARSERNICKNAME)$(NPARSES)best
 	mkdir -p $(NBESTDIR)
 	gzip -c $+ > $@
 
+#.PRECIOUS: $(TMP)/section%/$(NBESTPARSERNICKNAME)$(NPARSES)best
 .INTERMEDIATE: $(TMP)/section%/$(NBESTPARSERNICKNAME)$(NPARSES)best
 $(TMP)/section%/$(NBESTPARSERNICKNAME)$(NPARSES)best: $(TMP)/section%/yield $(NBESTPARSER)
-	$(EXEC) $(NBESTPARSER) -l400 -K -N$(NPARSES) $(NBESTPARSERBASEDIR)/DATA/EN/ $(@D)/yield > $@
+	$(EXEC_JOB) "$(NBESTPARSER) -l400 -K -N$(NPARSES) $(NBESTPARSERBASEDIR)/DATA/EN/ $(@D)/yield > $@"
 
-.INTERMEDIATE: $(TMP)/section%/yield
+.PRECIOUS: $(TMP)/section%/yield
+#.INTERMEDIATE: $(TMP)/section%/yield
 $(TMP)/section%/yield: second-stage/programs/prepare-data/ptb
 	mkdir -p $(@D)
-	$(EXEC) second-stage/programs/prepare-data/ptb -c $(PENNWSJTREEBANK)/$(patsubst $(TMP)/section%,%,$(@D))/wsj*.mrg  > $@
+	$(EXEC_JOB) "second-stage/programs/prepare-data/ptb -c $(PENNWSJTREEBANK)/$(patsubst $(TMP)/section%,%,$(@D))/wsj*.mrg  > $@"
 
 ########################################################################
 #                                                                      #

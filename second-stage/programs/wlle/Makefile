@@ -65,14 +65,18 @@ TAO_PETSC_LIBS = -L${TAO_DIR}/lib/${PETSC_ARCH} -ltaopetsc -ltao -Wl,-rpath,${TA
 
 # end of TAO stuff
 
+# jimwhite: Don't override the variable settings from top-level Makefile.
+
 # Compilation help: you may need to remove -march=native on older compilers.
-GCCFLAGS=-march=native -mfpmath=sse -msse2 -mmmx
+# GCCFLAGS=-march=native -mfpmath=sse -msse2 -mmmx
 FOPENMP=-fopenmp
 
-CC=gcc
-CFLAGS=-MMD -O6 -ffast-math -fstrict-aliasing -Wall -finline-functions $(GCCFLAGS) $(FOPENMP)
-LDFLAGS=$(FOPENMP)
-CXXFLAGS=${CFLAGS} ${TAO_PETSC_INCLUDE} -Wno-deprecated
+CC ?= gcc
+CFLAGS ?= -MMD -O6 -ffast-math -fstrict-aliasing -Wall -finline-functions $(GCCFLAGS)
+CFLAGS += $(FOPENMP)
+LDFLAGS = $(FOPENMP)
+CXXFLAGS ?= ${CFLAGS}
+CXXFLAGS += ${TAO_PETSC_INCLUDE} -Wno-deprecated
 
 # FOPENMP=
 # CFLAGS=-MMD -O1 -g $(GCCFLAGS) $(FOPENMP)
