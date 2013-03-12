@@ -4,7 +4,9 @@
 #
 # Should be called with the treebank source files as an argument
 
-second-stage/programs/prepare-data/ptb -c $* | parse.sh -K > parse-trees.tmp
-second-stage/programs/prepare-data/ptb -e $* > gold-trees.tmp
-evalb/evalb -p evalb/new.prm gold-trees.tmp parse-trees.tmp
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+"$SCRIPT_DIR/second-stage/programs/prepare-data/ptb" -c $* | "$SCRIPT_DIR/parse.sh" -K > parse-trees.tmp
+"$SCRIPT_DIR/second-stage/programs/prepare-data/ptb" -e $* > gold-trees.tmp
+"$SCRIPT_DIR/evalb/evalb" -p "$SCRIPT_DIR/evalb/new.prm" gold-trees.tmp parse-trees.tmp
 rm parse-trees.tmp gold-trees.tmp
