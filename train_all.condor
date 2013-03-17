@@ -1,0 +1,17 @@
+####################
+#
+# James White (mailto:jimwhite@uw.edu)
+#
+####################
+
+Universe   = vanilla
+Environment = PATH=/usr/kerberos/bin:/usr/local/bin:/bin:/usr/bin:/opt/git/bin:/opt/scripts:/condor/bin;LC_COLLATE=C
+Executable  = train_all.sh
+Arguments   = 
+Log         = /tmp/jimwhite-train_all-sh.log
+Output	    = jimwhite-train_all-sh.out
+Error       = jimwhite-train_all-sh.err
+#Request_Memory=6*1029
+#Periodic_Remove = (RemoteWallClockTime - CumulativeSuspensionTime) > 1800)
+Notification=Error
+Queue
