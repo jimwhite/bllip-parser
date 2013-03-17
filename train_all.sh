@@ -35,8 +35,8 @@ echo make train-reranker
 make train-reranker
 echo train-reranker = $?
 
-echo ===================
-
-echo make eval-reranker
-make eval-reranker
-echo eval-reranker = $?
+#echo ===================
+#
+#echo make eval-reranker
+#make eval-reranker
+#echo eval-reranker = $?
