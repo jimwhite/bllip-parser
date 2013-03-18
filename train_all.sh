@@ -10,11 +10,13 @@ PENNWSJTREEBANK=/corpora/LDC/LDC99T42/RAW/parsed/mrg/wsj
 
 mkdir tmp
 
-XTRAIN=`echo $PENNWSJTREEBANK/0[2-9]/*mrg $PENNWSJTREEBANK/1[0-9]/*mrg $PENNWSJTREEBANK/2[0-1]/*mrg $BROWNTREEBANK/*01.mrg $BROWNTREEBANK/*[1-9][0-9].mrg $BROWNTREEBANK/*0[3-9].mrg`
+#XTRAIN=`echo $PENNWSJTREEBANK/0[2-9]/*mrg $PENNWSJTREEBANK/1[0-9]/*mrg $PENNWSJTREEBANK/2[0-1]/*mrg $BROWNTREEBANK/*01.mrg $BROWNTREEBANK/*[1-9][0-9].mrg $BROWNTREEBANK/*0[3-9].mrg`
+XTRAIN=`echo $PENNWSJTREEBANK/0[2-9]/*mrg $PENNWSJTREEBANK/1[0-9]/*mrg $PENNWSJTREEBANK/2[0-1]/*mrg $BROWNTREEBANK/*.mrg
 echo $XTRAIN >tmp/train-all-files.txt
 cat $XTRAIN >tmp/train-all.mrg 
 
-XDEV=`echo $BROWNTREEBANK/*02.mrg`
+#XDEV=`echo $BROWNTREEBANK/*02.mrg`
+XDEV=`echo $PENNWSJTREEBANK/24/*.mrg`
 echo $XDEV >tmp/dev-all-files.txt
 cat $XDEV >tmp/dev-all.mrg
 
