@@ -29,6 +29,8 @@ fi
 echo $XDEV >tmp/dev-all-files.txt
 cat $XDEV >tmp/dev-all.mrg
 
+make top
+
 first-stage/TRAIN/allScript first-stage/DATA/EN tmp/train-all.mrg tmp/dev-all.mrg
 
 echo allScript = $?
