@@ -45,7 +45,7 @@ echo make nbesttrain = $?
 echo ===================
 
 echo make train-reranker
-make train-reranker
+make -j 1 train-reranker
 echo train-reranker = $?
 
 #echo ===================
