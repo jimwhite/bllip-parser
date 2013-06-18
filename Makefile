@@ -35,6 +35,11 @@
 # echo $?
 # tail make_out.txt
 #
+# Some of the reranker's C++ code uses the Boost library.
+# If you're on a Mac then Homebrew is a convenient way to install that.
+# http://mxcl.github.io/homebrew/
+# brew install -v boost
+#
 
 # To run 2 jobs in parallel (e.g. on a multiprocessor) run, e.g.,
 #
