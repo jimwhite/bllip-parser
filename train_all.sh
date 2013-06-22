@@ -16,7 +16,7 @@ mkdir tmp
 
 XTRAIN=`echo $PARSER_TRAINING_DIR/*.mrg`
 echo $XTRAIN >tmp/train-all-files.txt
-cat $XTRAIN >tmp/train-all.mrg 
+# cat $XTRAIN >tmp/train-all.mrg 
 
 
 if [ -d "$PARSER_TUNING_DIR" ]; then
@@ -27,11 +27,12 @@ XDEV=`echo $PENNWSJTREEBANK/24/*.mrg`
 fi
 
 echo $XDEV >tmp/dev-all-files.txt
-cat $XDEV >tmp/dev-all.mrg
+# cat $XDEV >tmp/dev-all.mrg
 
-make top
+make reranker
 
-first-stage/TRAIN/allScript first-stage/DATA/EN tmp/train-all.mrg tmp/dev-all.mrg
+# We shouldn't need this model since the folds train their own.
+# first-stage/TRAIN/allScript first-stage/DATA/EN tmp/train-all.mrg tmp/dev-all.mrg
 
 echo allScript = $?
 echo ===================
