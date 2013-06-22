@@ -333,7 +333,7 @@ real-clean: clean train-clean
 # This is defined here to use sections 2-21 of the Penn WSJ treebank.
 #
 # TRAIN=$(PENNWSJTREEBANK)/0[2-9]/*mrg $(PENNWSJTREEBANK)/1[0-9]/*mrg $(PENNWSJTREEBANK)/2[0-1]/*mrg $(XDATADIR)/*mrg
-TRAIN=$(XDATADIR)/*mrg
+TRAIN=$(XDATADIR)/*.mrg
 
 # NBESTDIR is the directory that holds the n-best parses for training
 # the reranker.
@@ -367,11 +367,19 @@ $(NBESTDIR)/fold%.gz: $(TMP)/fold%/$(NBESTPARSERNICKNAME)$(NPARSES)best
 $(TMP)/fold%/$(NBESTPARSERNICKNAME)$(NPARSES)best: $(TMP)/fold%/DATA $(TMP)/fold%/yield $(NBESTPARSER)
 	$(EXEC_JOB) "$(NBESTPARSER) -l400 -K -N$(NPARSES) $(@D)/DATA/ $(@D)/yield > $@"
 
+#.INTERMEDIATE: $(TMP)/fold%/DATA
+#$(TMP)/fold%/DATA: $(TMP)/fold%/train $(TMP)/fold%/dev $(NBESTTRAINER)
+#	mkdir -p $@
+#	LC_COLLATE=C; cp $(NBESTPARSERBASEDIR)/DATA/EN/[a-z]* $@
+#	$(EXEC_JOB) "$(NBESTTRAINER) '$@' $(@D)/train $(@D)/dev"
+ 
+# Let's make the copying of the first-stage configuration data explicit as far as what files are included.
+
 .INTERMEDIATE: $(TMP)/fold%/DATA
 $(TMP)/fold%/DATA: $(TMP)/fold%/train $(TMP)/fold%/dev $(NBESTTRAINER)
 	mkdir -p $@
-	LC_COLLATE=C; cp $(NBESTPARSERBASEDIR)/DATA/EN/[a-z]* $@
-	$(EXEC_JOB) "$(NBESTTRAINER) "$@" $(@D)/train $(@D)/dev"
+	LC_COLLATE=C; cp $(NBESTPARSERBASEDIR)/DATA/EN/featInfo.* $(NBESTPARSERBASEDIR)/DATA/EN/headInfo.* $(NBESTPARSERBASEDIR)/DATA/EN/terms.txt $(NBESTPARSERBASEDIR)/DATA/EN/bugFix.txt $(NBESTPARSERBASEDIR)/DATA/EN/sometxt $@
+	$(EXEC_JOB) "$(NBESTTRAINER) '$@' $(@D)/train $(@D)/dev"
 
 .INTERMEDIATE: $(TMP)/fold%/train
 $(TMP)/fold%/train: second-stage/programs/prepare-data/ptb
@@ -383,15 +391,15 @@ $(TMP)/fold%/dev: second-stage/programs/prepare-data/ptb
 	mkdir -p $(@D)
 	$(EXEC_JOB) "second-stage/programs/prepare-data/ptb -n $(NFOLDS) -i $(patsubst $(TMP)/fold%,%,$(@D)) -e $(TRAIN)  > $@"
 
-# $(TMP)/fold%/DATA: $(TMP)/%/train $(TMP)/%/dev
-# 	mkdir -p $@
-# 	LC_COLLATE=C; cp $(NBESTPARSERBASEDIR)/DATA/EN/[a-z]* $@
-# 	$(NBESTPARSERBASEDIR)/TRAIN/allScript $@ $(@D)/train $(@D)/dev
-
 .INTERMEDIATE: $(TMP)/fold%/yield
 $(TMP)/fold%/yield: second-stage/programs/prepare-data/ptb
 	mkdir -p $(@D)
 	$(EXEC_JOB) "second-stage/programs/prepare-data/ptb -n $(NFOLDS) -i $(patsubst $(TMP)/fold%,%,$(@D)) -c $(TRAIN) > $@"
+
+# $(TMP)/fold%/DATA: $(TMP)/section%/train $(TMP)/%/dev
+# 	mkdir -p $@
+# 	LC_COLLATE=C; cp $(NBESTPARSERBASEDIR)/DATA/EN/[a-z]* $@
+# 	$(NBESTPARSERBASEDIR)/TRAIN/allScript $@ $(@D)/train $(@D)/dev
 
 .INTERMEDIATE: $(NBESTDIR)/section%.gz
 $(NBESTDIR)/section%.gz: $(TMP)/section%/$(NBESTPARSERNICKNAME)$(NPARSES)best
