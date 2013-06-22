@@ -367,6 +367,16 @@ $(NBESTDIR)/fold%.gz: $(TMP)/fold%/$(NBESTPARSERNICKNAME)$(NPARSES)best
 $(TMP)/fold%/$(NBESTPARSERNICKNAME)$(NPARSES)best: $(TMP)/fold%/DATA $(TMP)/fold%/yield $(NBESTPARSER)
 	$(EXEC_JOB) "$(NBESTPARSER) -l400 -K -N$(NPARSES) $(@D)/DATA/ $(@D)/yield > $@"
 
+.INTERMEDIATE: $(TMP)/fold%/train
+$(TMP)/fold%/train: second-stage/programs/prepare-data/ptb
+	mkdir -p $(@D)
+	$(EXEC_JOB) "second-stage/programs/prepare-data/ptb -n $(NFOLDS) -x $(patsubst $(TMP)/fold%,%,$(@D)) -e $(TRAIN)  > $@"
+
+.INTERMEDIATE: $(TMP)/fold%/dev
+$(TMP)/fold%/dev: second-stage/programs/prepare-data/ptb
+	mkdir -p $(@D)
+	$(EXEC_JOB) "second-stage/programs/prepare-data/ptb -n $(NFOLDS) -i $(patsubst $(TMP)/fold%,%,$(@D)) -e $(TRAIN)  > $@"
+
 #.INTERMEDIATE: $(TMP)/fold%/DATA
 #$(TMP)/fold%/DATA: $(TMP)/fold%/train $(TMP)/fold%/dev $(NBESTTRAINER)
 #	mkdir -p $@
@@ -379,17 +389,7 @@ $(TMP)/fold%/$(NBESTPARSERNICKNAME)$(NPARSES)best: $(TMP)/fold%/DATA $(TMP)/fold
 $(TMP)/fold%/DATA: $(TMP)/fold%/train $(TMP)/fold%/dev $(NBESTTRAINER)
 	mkdir -p $@
 	LC_COLLATE=C; cp $(NBESTPARSERBASEDIR)/DATA/EN/featInfo.* $(NBESTPARSERBASEDIR)/DATA/EN/headInfo.* $(NBESTPARSERBASEDIR)/DATA/EN/terms.txt $(NBESTPARSERBASEDIR)/DATA/EN/bugFix.txt $(NBESTPARSERBASEDIR)/DATA/EN/sometxt $@
-	$(EXEC_JOB) "$(NBESTTRAINER) '$@' $(@D)/train $(@D)/dev"
-
-.INTERMEDIATE: $(TMP)/fold%/train
-$(TMP)/fold%/train: second-stage/programs/prepare-data/ptb
-	mkdir -p $(@D)
-	$(EXEC_JOB) "second-stage/programs/prepare-data/ptb -n $(NFOLDS) -x $(patsubst $(TMP)/fold%,%,$(@D)) -e $(TRAIN)  > $@"
-
-.INTERMEDIATE: $(TMP)/fold%/dev
-$(TMP)/fold%/dev: second-stage/programs/prepare-data/ptb
-	mkdir -p $(@D)
-	$(EXEC_JOB) "second-stage/programs/prepare-data/ptb -n $(NFOLDS) -i $(patsubst $(TMP)/fold%,%,$(@D)) -e $(TRAIN)  > $@"
+	$(EXEC_JOB) "$(NBESTTRAINER) "$@" $(@D)/train $(@D)/dev"
 
 .INTERMEDIATE: $(TMP)/fold%/yield
 $(TMP)/fold%/yield: second-stage/programs/prepare-data/ptb
