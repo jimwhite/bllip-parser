@@ -3,11 +3,11 @@
 PARSER_TRAINING_DIR=xtrain
 PARSER_TUNING_DIR=xtune
 
-PENNWSJTREEBANK=notused
+export PENNWSJTREEBANK=notused
 
-PTB_TEST1_MRG=/projects/SSTP/Parsing/corpora/anydomain/WSJ/22.mrg
-PTB_TEST2_MRG=/projects/SSTP/Parsing/corpora/anydomain/WSJ/23.mrg
-PTB_DEV_MRG=/projects/SSTP/Parsing/corpora/anydomain/WSJ/24.mrg
+export PTB_TEST1_MRG=/projects/SSTP/Parsing/corpora/anydomain/WSJ/22.mrg
+export PTB_TEST2_MRG=/projects/SSTP/Parsing/corpora/anydomain/WSJ/23.mrg
+export PTB_DEV_MRG=/projects/SSTP/Parsing/corpora/anydomain/WSJ/24.mrg
 
 if [ ! -d "$PARSER_TRAINING_DIR" ]; then
 
@@ -17,15 +17,15 @@ exit 111
 
 fi
 
-XTRAIN=`echo $PARSER_TRAINING_DIR/*.mrg`
+export XTRAIN=`echo $PARSER_TRAINING_DIR/*.mrg`
 
-XDEV=`echo $PARSER_TUNING_DIR/*.mrg`
+export XDEV=`echo $PARSER_TUNING_DIR/*.mrg`
 
 make reranker
 
 echo make nbesttrain
 make -j 50 nbesttrain
-result = $?
+result=$?
 
 echo make nbesttrain = $result
 
@@ -35,7 +35,7 @@ echo ===================
 
 echo make train-reranker
 make -j 1 train-reranker
-result = $?
+result=$?
 
 echo train-reranker = $result
 

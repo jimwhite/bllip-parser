@@ -14,4 +14,5 @@ Error       = train_reranker-sh.err
 Request_Memory=6*1029
 #Periodic_Remove = (RemoteWallClockTime - CumulativeSuspensionTime) > 1800)
 Notification=Error
++Research=true
 Queue

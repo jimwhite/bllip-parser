@@ -410,10 +410,27 @@ $(NBESTDIR)/section%.gz: $(TMP)/section%/$(NBESTPARSERNICKNAME)$(NPARSES)best
 $(TMP)/section%/$(NBESTPARSERNICKNAME)$(NPARSES)best: $(TMP)/section%/yield $(NBESTPARSER)
 	$(EXEC_JOB) "$(NBESTPARSER) -l400 -K -N$(NPARSES) $(NBESTPARSERBASEDIR)/DATA/EN/ $(@D)/yield > $@"
 
-.INTERMEDIATE: $(TMP)/section%/yield
+
+.INTERMEDIATE: $(TMP)/section22/yield
 $(TMP)/section%/yield: second-stage/programs/prepare-data/ptb
 	mkdir -p $(@D)
-	$(EXEC_JOB) "second-stage/programs/prepare-data/ptb -c $(PENNWSJTREEBANK)/$(patsubst $(TMP)/section%,%,$(@D))/wsj*.mrg  > $@"
+	$(EXEC_JOB) "second-stage/programs/prepare-data/ptb -c $(PTB_TEST1_MRG)  > $@"
+
+.INTERMEDIATE: $(TMP)/section23/yield
+$(TMP)/section%/yield: second-stage/programs/prepare-data/ptb
+	mkdir -p $(@D)
+	$(EXEC_JOB) "second-stage/programs/prepare-data/ptb -c $(PTB_TEST2_MRG)  > $@"
+
+.INTERMEDIATE: $(TMP)/section24/yield
+$(TMP)/section%/yield: second-stage/programs/prepare-data/ptb
+	mkdir -p $(@D)
+	$(EXEC_JOB) "second-stage/programs/prepare-data/ptb -c $(PTB_DEV_MRG)  > $@"
+
+
+#.INTERMEDIATE: $(TMP)/section%/yield
+#$(TMP)/section%/yield: second-stage/programs/prepare-data/ptb
+#	mkdir -p $(@D)
+#	$(EXEC_JOB) "second-stage/programs/prepare-data/ptb -c $(PENNWSJTREEBANK)/$(patsubst $(TMP)/section%,%,$(@D))/wsj*.mrg  > $@"
 
 ########################################################################
 #                                                                      #
