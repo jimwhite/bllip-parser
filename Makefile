@@ -172,8 +172,8 @@ TMP=tmp
 # section 24 is used as dev and sections 22 and 23 are used as test1
 # and test2 respectively.
 #
-VERSION=nonfinal
-# VERSION=final
+# VERSION=nonfinal
+VERSION=final
 
 # FEATUREEXTRACTOR is the program that used to extract features from
 # the 20-fold n-best parses.  If you change this, please pick a new 
