@@ -1,0 +1,17 @@
+####################
+#
+# James White (mailto:jimwhite@uw.edu)
+#
+####################
+
+Universe   = vanilla
+Environment = PATH=/usr/kerberos/bin:/usr/local/bin:/bin:/usr/bin:/opt/git/bin:/opt/scripts:/condor/bin;LC_COLLATE=C
+Executable  = train_reranker.sh
+Arguments   = 
+Log         = train_reranker-sh.log
+Output	    = train_reranker-sh.out
+Error       = train_reranker-sh.err
+Request_Memory=6*1029
+#Periodic_Remove = (RemoteWallClockTime - CumulativeSuspensionTime) > 1800)
+Notification=Error
+Queue
