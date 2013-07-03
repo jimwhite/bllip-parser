@@ -505,15 +505,34 @@ $(MODELBASEDIR)final/features.gz $(FEATBASEDIR)final/train.gz $(FEATBASEDIR)fina
 		"second-stage/programs/prepare-data/ptb -g $(TRAIN)" \
 		$(FEATBASEDIR)final/train.gz \
 		"zcat $(NBESTDIR)/section22.gz" \
-		"second-stage/programs/prepare-data/ptb -g $(PENNWSJTREEBANK)/22/*mrg" \
+		"second-stage/programs/prepare-data/ptb -g $(PTB_TEST1_MRG)" \
 		$(FEATBASEDIR)final/test1.gz \
 		"zcat $(NBESTDIR)/section23.gz" \
-		"second-stage/programs/prepare-data/ptb -g $(PENNWSJTREEBANK)/23/*mrg" \
+		"second-stage/programs/prepare-data/ptb -g $(PTB_TEST2_MRG)" \
 		$(FEATBASEDIR)final/test2.gz \
 		"zcat $(NBESTDIR)/section24.gz" \
-		"second-stage/programs/prepare-data/ptb -g $(PENNWSJTREEBANK)/24/*mrg" \
+		"second-stage/programs/prepare-data/ptb -g $(PTB_DEV_MRG)" \
 		$(FEATBASEDIR)final/dev.gz \
 		| gzip > $(MODELBASEDIR)final/features.gz
+
+
+#$(MODELBASEDIR)final/features.gz $(FEATBASEDIR)final/train.gz $(FEATBASEDIR)final/dev.gz $(FEATBASEDIR)final/test1.gz $(FEATBASEDIR)final/test2.gz: second-stage/programs/prepare-data/ptb $(FEATUREEXTRACTOR) $(NBESTFILES)
+#	mkdir -p $(FEATBASEDIR)final
+#	mkdir -p $(MODELBASEDIR)final
+#	$(EXEC) $(FEATUREEXTRACTOR) $(FEATUREEXTRACTORFLAGS) \
+#		"zcat $(NBESTDIR)/fold*.gz" \
+#		"second-stage/programs/prepare-data/ptb -g $(TRAIN)" \
+#		$(FEATBASEDIR)final/train.gz \
+#		"zcat $(NBESTDIR)/section22.gz" \
+#		"second-stage/programs/prepare-data/ptb -g $(PENNWSJTREEBANK)/22/*mrg" \
+#		$(FEATBASEDIR)final/test1.gz \
+#		"zcat $(NBESTDIR)/section23.gz" \
+#		"second-stage/programs/prepare-data/ptb -g $(PENNWSJTREEBANK)/23/*mrg" \
+#		$(FEATBASEDIR)final/test2.gz \
+#		"zcat $(NBESTDIR)/section24.gz" \
+#		"second-stage/programs/prepare-data/ptb -g $(PENNWSJTREEBANK)/24/*mrg" \
+#		$(FEATBASEDIR)final/dev.gz \
+#		| gzip > $(MODELBASEDIR)final/features.gz
 
 
 ########################################################################

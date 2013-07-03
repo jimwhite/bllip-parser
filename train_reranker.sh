@@ -5,6 +5,10 @@ PARSER_TUNING_DIR=xtune
 
 PENNWSJTREEBANK=notused
 
+PTB_TEST1_MRG=/projects/SSTP/Parsing/corpora/anydomain/WSJ/22.mrg
+PTB_TEST2_MRG=/projects/SSTP/Parsing/corpora/anydomain/WSJ/23.mrg
+PTB_DEV_MRG=/projects/SSTP/Parsing/corpora/anydomain/WSJ/24.mrg
+
 if [ ! -d "$PARSER_TRAINING_DIR" ]; then
 
 echo "Where's the per-parser data (xtrain)?."
@@ -23,9 +27,9 @@ echo make nbesttrain
 make -j 50 nbesttrain
 result = $?
 
-echo make nbesttrain = $?
+echo make nbesttrain = $result
 
-if [ $result == 0 ]; then
+if [ $result -eq 0 ]; then
 
 echo ===================
 
@@ -42,3 +46,5 @@ fi
 #echo make eval-reranker
 #make eval-reranker
 #echo eval-reranker = $?
+
+exit $result
