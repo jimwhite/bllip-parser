@@ -412,17 +412,17 @@ $(TMP)/section%/$(NBESTPARSERNICKNAME)$(NPARSES)best: $(TMP)/section%/yield $(NB
 
 
 .INTERMEDIATE: $(TMP)/section22/yield
-$(TMP)/section%/yield: second-stage/programs/prepare-data/ptb
+$(TMP)/section22/yield: second-stage/programs/prepare-data/ptb
 	mkdir -p $(@D)
 	$(EXEC_JOB) "second-stage/programs/prepare-data/ptb -c $(PTB_TEST1_MRG)  > $@"
 
 .INTERMEDIATE: $(TMP)/section23/yield
-$(TMP)/section%/yield: second-stage/programs/prepare-data/ptb
+$(TMP)/section23/yield: second-stage/programs/prepare-data/ptb
 	mkdir -p $(@D)
 	$(EXEC_JOB) "second-stage/programs/prepare-data/ptb -c $(PTB_TEST2_MRG)  > $@"
 
 .INTERMEDIATE: $(TMP)/section24/yield
-$(TMP)/section%/yield: second-stage/programs/prepare-data/ptb
+$(TMP)/section23/yield: second-stage/programs/prepare-data/ptb
 	mkdir -p $(@D)
 	$(EXEC_JOB) "second-stage/programs/prepare-data/ptb -c $(PTB_DEV_MRG)  > $@"
 
