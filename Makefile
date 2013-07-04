@@ -422,7 +422,7 @@ $(TMP)/section23/yield: second-stage/programs/prepare-data/ptb
 	$(EXEC_JOB) "second-stage/programs/prepare-data/ptb -c $(PTB_TEST2_MRG)  > $@"
 
 .INTERMEDIATE: $(TMP)/section24/yield
-$(TMP)/section23/yield: second-stage/programs/prepare-data/ptb
+$(TMP)/section24/yield: second-stage/programs/prepare-data/ptb
 	mkdir -p $(@D)
 	$(EXEC_JOB) "second-stage/programs/prepare-data/ptb -c $(PTB_DEV_MRG)  > $@"
 
