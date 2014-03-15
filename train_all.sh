@@ -16,7 +16,7 @@ mkdir tmp
 
 XTRAIN=`echo $PARSER_TRAINING_DIR/*.mrg`
 echo $XTRAIN >tmp/train-all-files.txt
-# cat $XTRAIN >tmp/train-all.mrg 
+cat $XTRAIN >tmp/train-all.mrg 
 
 
 if [ -d "$PARSER_TUNING_DIR" ]; then
@@ -27,12 +27,14 @@ XDEV=`echo $PENNWSJTREEBANK/24/*.mrg`
 fi
 
 echo $XDEV >tmp/dev-all-files.txt
-# cat $XDEV >tmp/dev-all.mrg
+cat $XDEV >tmp/dev-all.mrg
 
 make reranker
 
-# We shouldn't need this model since the folds train their own.
-# first-stage/TRAIN/allScript first-stage/DATA/EN tmp/train-all.mrg tmp/dev-all.mrg
+# This model is used to parse the SECTIONS list (23 23 24) of WSJ.
+# What do we need it for?  It's still here because they get passed to the feature extractor.
+# See Makefile lines 478 ~ 516.  I need to figure out what that's for and I'm supposed to configure it.
+first-stage/TRAIN/allScript first-stage/DATA/EN tmp/train-all.mrg tmp/dev-all.mrg
 
 echo allScript = $?
 echo ===================
