@@ -70,6 +70,21 @@
 #
 # GCCFLAGS = -march=native -mfpmath=sse -msse2 -mmmx -m32
 
+# GCCFLAGS = -march=x86_64 -mfpmath=sse -msse2 -mssse3 -mmmx -m64
+
+# Must use export because otherwise second-stage/programs/wlle/Makefile doesn't get the message.
+
+GCCFLAGS = -m64 -march=core2 -mfpmath=sse
+export GCCFLAGS
+
+# CC = condor_compile gcc
+CC = gcc
+export CC
+
+# CXX = condor_compile g++
+CXX = g++
+export CXX
+
 # CFLAGS is used for all C and C++ compilation
 #
 CFLAGS = -MMD -O3 -Wall -ffast-math -finline-functions -fomit-frame-pointer -fstrict-aliasing $(GCCFLAGS)
@@ -101,7 +116,8 @@ export LDFLAGS
 #
 # PENNWSJTREEBANK must be set to the base directory of the Penn WSJ Treebank
 #
-PENNWSJTREEBANK=/usr/local/data/Penn3/parsed/mrg/wsj/
+# PENNWSJTREEBANK=/usr/local/data/Penn3/parsed/mrg/wsj/
+PENNWSJTREEBANK=/corpora/LDC/LDC99T42/RAW/parsed/mrg/wsj
 
 # NPARSES is the number of alternative parses to consider for each sentence
 #
@@ -198,7 +214,8 @@ ESTIMATORFLAGS=-l 1 -c 10 -F 1 -n -1 -p 2
 
 # ESTIMATORNICKNAME is used to name the feature weights file
 #
-ESTIMATORNICKNAME=lbfgs-l1c10F1n1p2
+# ESTIMATORNICKNAME=lbfgs-l1c10F1n1p2
+ESTIMATORNICKNAME=cvlm-lbfgs
 
 # ESTIMATORSTACKSIZE is the size (in KB) of the per-thread stacks
 # used during estimation
