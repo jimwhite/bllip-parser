@@ -72,6 +72,12 @@
 
 # GCCFLAGS = -march=x86_64 -mfpmath=sse -msse2 -mssse3 -mmmx -m64
 
+# For Mavericks (and Mountain Lion) I set up gcc using macports:
+# sudo port install gcc47
+# sudo port select --set gcc mp-gcc47
+# sudo port install boost
+# sudo port install liblbfgs
+
 # Must use export because otherwise second-stage/programs/wlle/Makefile doesn't get the message.
 
 GCCFLAGS = -m64 -march=core2 -mfpmath=sse
