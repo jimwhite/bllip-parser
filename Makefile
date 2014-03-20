@@ -31,7 +31,7 @@
 #
 # The following high-level goals may also be useful:
 #
-# make nbestrain-clean # removes temporary files used in nbesttrain
+# make nbesttrain-clean # removes temporary files used in nbesttrain
 # make nbest-oracle    # oracle evaluation of n-best results 
 # make features        # extracts features from 20-fold parses
 # make train-reranker  # trains reranker model
@@ -70,10 +70,25 @@
 #
 # GCCFLAGS = -march=native -mfpmath=sse -msse2 -mmmx -m32
 
+# GCCFLAGS = -march=x86_64 -mfpmath=sse -msse2 -mssse3 -mmmx -m64
+
+# Must use export because otherwise second-stage/programs/wlle/Makefile doesn't get the message.
+
+GCCFLAGS = -m64 -march=core2 -mfpmath=sse
+export GCCFLAGS
+
+# CC = condor_compile gcc
+CC = gcc
+export CC
+
+# CXX = condor_compile g++
+CXX = g++
+export CXX
+
 # CFLAGS is used for all C and C++ compilation
 #
 CFLAGS = -MMD -O3 -Wall -ffast-math -finline-functions -fomit-frame-pointer -fstrict-aliasing $(GCCFLAGS)
-LDFLAGS = $(GCCLDFLAGS)
+LDFLAGS = -L/opt/local/lib $(GCCLDFLAGS)
 EXEC = time
 
 # for SWIG wrappers, use these flags instead
@@ -93,6 +108,11 @@ export CFLAGS
 export CXXFLAGS
 export LDFLAGS
 
+CC=gcc
+CXX=g++
+export CC
+export CXX
+
 # Building the 20-fold training data with nbesttrain 
 # --------------------------------------------------
 
@@ -101,7 +121,8 @@ export LDFLAGS
 #
 # PENNWSJTREEBANK must be set to the base directory of the Penn WSJ Treebank
 #
-PENNWSJTREEBANK=/usr/local/data/Penn3/parsed/mrg/wsj/
+# PENNWSJTREEBANK=/usr/local/data/Penn3/parsed/mrg/wsj/
+PENNWSJTREEBANK=/corpora/LDC/LDC99T42/RAW/parsed/mrg/wsj
 
 # NPARSES is the number of alternative parses to consider for each sentence
 #
@@ -193,11 +214,11 @@ FEATURESNICKNAME=sp
 ESTIMATOR=second-stage/programs/wlle/cvlm-lbfgs
 
 # ESTIMATORFLAGS are flags given to the estimator
-#
+
 ESTIMATORFLAGS=-l 1 -c 10 -F 1 -n -1 -p 2
 
 # ESTIMATORNICKNAME is used to name the feature weights file
-#
+
 ESTIMATORNICKNAME=lbfgs-l1c10F1n1p2
 
 # ESTIMATORSTACKSIZE is the size (in KB) of the per-thread stacks
