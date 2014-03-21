@@ -69,19 +69,29 @@
 # versions will need -march=pentium4 or -march=opteron
 #
 # GCCFLAGS = -march=native -mfpmath=sse -msse2 -mmmx -m32
+#
+# On Mac OS X using -march=native doesn't seem to work, so we need to set it.
+# This should be safe for any 64bit machine:
+# GCCFLAGS = -m64 -march=x86-64 
+# You can find out what switches gcc would use for your machine this way:
+# gcc -Q --help=target -march=native 
+# So for a 2013 MacBook Air we might expect to use something like this:
+# GCCFLAGS = -m64 -march=ivybridge -mfpmath=sse -msse -msse2 -msse3 -msse4 -msse4.1 -msse4.2 -mavx -mssse3
+# But we can't use the -mavx switch because of a problem with the assembler setup.
+# Which is presumably why -march=native fails, as indicated by other folks' experience as well:
+# http://stackoverflow.com/questions/12016281/g-no-such-instruction-with-avx
+# http://mac-os-forge.2317878.n4.nabble.com/gcc-as-AVX-binutils-and-MacOS-X-10-7-td144472.html
+# So I wind up with this:
+GCCFLAGS = -m64 -march=x86-64 -mfpmath=sse -msse -msse2 -msse3 -msse4 -msse4.1 -msse4.2 -mssse3
 
-# GCCFLAGS = -march=x86_64 -mfpmath=sse -msse2 -mssse3 -mmmx -m64
+# Must use export because otherwise second-stage/programs/wlle/Makefile doesn't get the message.
+export GCCFLAGS
 
 # For Mavericks (and Mountain Lion) I set up gcc using macports:
 # sudo port install gcc47
 # sudo port select --set gcc mp-gcc47
 # sudo port install boost
 # sudo port install liblbfgs
-
-# Must use export because otherwise second-stage/programs/wlle/Makefile doesn't get the message.
-
-GCCFLAGS = -m64 -march=core2 -mfpmath=sse
-export GCCFLAGS
 
 # CC = condor_compile gcc
 CC = gcc
@@ -94,6 +104,7 @@ export CXX
 # CFLAGS is used for all C and C++ compilation
 #
 CFLAGS = -MMD -O3 -Wall -ffast-math -finline-functions -fomit-frame-pointer -fstrict-aliasing $(GCCFLAGS)
+# For some reason macports does put liblbfgs' files on the right path, so I add it on here.
 LDFLAGS = -L/opt/local/lib $(GCCLDFLAGS)
 EXEC = time
 
@@ -127,8 +138,7 @@ export CXX
 #
 # PENNWSJTREEBANK must be set to the base directory of the Penn WSJ Treebank
 #
-# PENNWSJTREEBANK=/usr/local/data/Penn3/parsed/mrg/wsj/
-PENNWSJTREEBANK=/corpora/LDC/LDC99T42/RAW/parsed/mrg/wsj
+PENNWSJTREEBANK=/usr/local/data/Penn3/parsed/mrg/wsj/
 
 # NPARSES is the number of alternative parses to consider for each sentence
 #
@@ -220,11 +230,11 @@ FEATURESNICKNAME=sp
 ESTIMATOR=second-stage/programs/wlle/cvlm-lbfgs
 
 # ESTIMATORFLAGS are flags given to the estimator
-
+#
 ESTIMATORFLAGS=-l 1 -c 10 -F 1 -n -1 -p 2
 
 # ESTIMATORNICKNAME is used to name the feature weights file
-
+#
 ESTIMATORNICKNAME=lbfgs-l1c10F1n1p2
 
 # ESTIMATORSTACKSIZE is the size (in KB) of the per-thread stacks
