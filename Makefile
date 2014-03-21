@@ -97,7 +97,7 @@ export CXX
 # CFLAGS is used for all C and C++ compilation
 #
 CFLAGS = -MMD -O3 -Wall -ffast-math -finline-functions -fomit-frame-pointer -fstrict-aliasing $(GCCFLAGS)
-# For some reason macports does put liblbfgs' files on the right path, so I add it on here.
+# For some reason MacPorts does not put liblbfgs' files on the right path, so I add it on here.
 LDFLAGS = -L/opt/local/lib $(GCCLDFLAGS)
 EXEC = time
 
