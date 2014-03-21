@@ -70,19 +70,12 @@
 #
 # GCCFLAGS = -march=native -mfpmath=sse -msse2 -mmmx -m32
 #
-# On Mac OS X using -march=native doesn't seem to work, so we need to set it.
-# This should be safe for any 64bit machine:
-# GCCFLAGS = -m64 -march=x86-64 
-# You can find out what switches gcc would use for your machine this way:
-# gcc -Q --help=target -march=native 
-# So for a 2013 MacBook Air we might expect to use something like this:
-# GCCFLAGS = -m64 -march=ivybridge -mfpmath=sse -msse -msse2 -msse3 -msse4 -msse4.1 -msse4.2 -mavx -mssse3
-# But we can't use the -mavx switch because of a problem with the assembler setup.
-# Which is presumably why -march=native fails, as indicated by other folks' experience as well:
+# On Mac OS X using -march=native doesn't seem to work (a compilation error will occur).
+# Turns out there is a problem with AVX instructions on OSX for gcc after 4.2.
 # http://stackoverflow.com/questions/12016281/g-no-such-instruction-with-avx
 # http://mac-os-forge.2317878.n4.nabble.com/gcc-as-AVX-binutils-and-MacOS-X-10-7-td144472.html
-# So I wind up with this:
-GCCFLAGS = -m64 -march=x86-64 -mfpmath=sse -msse -msse2 -msse3 -msse4 -msse4.1 -msse4.2 -mssse3
+# So here's what works for me (with or without the -mfpmath=sse - the default is 387):
+GCCFLAGS = -m64 -march=native -mno-avx -mfpmath=sse
 
 # Must use export because otherwise second-stage/programs/wlle/Makefile doesn't get the message.
 export GCCFLAGS
