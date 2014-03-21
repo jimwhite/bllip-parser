@@ -83,8 +83,7 @@ export GCCFLAGS
 # For Mavericks (and Mountain Lion) I set up gcc using macports:
 # sudo port install gcc47
 # sudo port select --set gcc mp-gcc47
-# sudo port install boost
-# sudo port install liblbfgs
+# sudo port install boost liblbfgs
 
 # CC = condor_compile gcc
 CC = gcc
