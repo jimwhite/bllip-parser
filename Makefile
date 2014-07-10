@@ -68,36 +68,12 @@
 # Version 4.1 and later gcc permit -march=native, but older
 # versions will need -march=pentium4 or -march=opteron
 #
-# GCCFLAGS = -march=native -mfpmath=sse -msse2 -mmmx -m32
-#
-# On Mac OS X using -march=native doesn't seem to work (a compilation error will occur).
-# Turns out there is a problem with AVX instructions on OSX for gcc after 4.2.
-# http://stackoverflow.com/questions/12016281/g-no-such-instruction-with-avx
-# http://mac-os-forge.2317878.n4.nabble.com/gcc-as-AVX-binutils-and-MacOS-X-10-7-td144472.html
-# So here's what works for me (with or without the -mfpmath=sse - the default is 387):
-GCCFLAGS = -m64 -march=native -mno-avx -mfpmath=sse
-
-# Must use export because otherwise second-stage/programs/wlle/Makefile doesn't get the message.
-export GCCFLAGS
-
-# For Mavericks (and Mountain Lion) I set up gcc using macports:
-# sudo port install gcc47
-# sudo port select --set gcc mp-gcc47
-# sudo port install boost liblbfgs
-
-# CC = condor_compile gcc
-CC = gcc
-export CC
-
-# CXX = condor_compile g++
-CXX = g++
-export CXX
+# GCCFLAGS ?= -march=native -mfpmath=sse -msse2 -mmmx -m32
 
 # CFLAGS is used for all C and C++ compilation
 #
 CFLAGS = -MMD -O3 -Wall -ffast-math -finline-functions -fomit-frame-pointer -fstrict-aliasing $(GCCFLAGS)
-# For some reason MacPorts does not put liblbfgs' files on the right path, so I add it on here.
-LDFLAGS = -L/opt/local/lib $(GCCLDFLAGS)
+
 EXEC = time
 
 # for SWIG wrappers, use these flags instead
@@ -112,13 +88,13 @@ EXEC = time
 # LDFLAGS = -g -Wall $(GCCLDFLAGS)
 # EXEC = valgrind
 
-CXXFLAGS = $(CFLAGS) -Wno-deprecated
+CXXFLAGS ?= $(CFLAGS) -Wno-deprecated
 export CFLAGS
 export CXXFLAGS
 export LDFLAGS
 
-CC=gcc
-CXX=g++
+CC ?= gcc
+CXX ?= g++
 export CC
 export CXX
 
