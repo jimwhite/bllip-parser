@@ -279,9 +279,17 @@ SParseval:
 	tar xvzf SParseval.tgz
 	rm SParseval.tgz
 
+# The SParseval makefile uses a -lm dependency (a bad idea imho) which fails because there
+# is no libm.a to be used.  This trick works by mapping that to the system's libm.dylib.
+# .LIBPATTERNS+=lib%.dylib
+# export .LIBPATTERNS
+# But we can't put that in Makefile.mac because it would mess up some of the other programs.
+# So I put it here in the Make arguments and it shouldn't hurt Linuxen where the default 
+# rules were already working.
+
 SParseval/src/sparseval: SParseval
 	rm -f SParseval/src/*.o
-	$(MAKE) -C SParseval/src sparseval
+	$(MAKE) -C SParseval/src .LIBPATTERNS+=lib%.dylib sparseval
 
 # clean removes object files.
 #
