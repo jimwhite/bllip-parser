@@ -31,7 +31,7 @@
 #
 # The following high-level goals may also be useful:
 #
-# make nbestrain-clean # removes temporary files used in nbesttrain
+# make nbesttrain-clean # removes temporary files used in nbesttrain
 # make nbest-oracle    # oracle evaluation of n-best results 
 # make features        # extracts features from 20-fold parses
 # make train-reranker  # trains reranker model
@@ -70,11 +70,19 @@
 #
 # GCCFLAGS = -march=native -mfpmath=sse -msse2 -mmmx -m32
 
+# CC = condor_compile gcc
+CC ?= gcc
+export CC
+
+# CXX = condor_compile g++
+CXX ?= g++
+export CXX
+
 # CFLAGS is used for all C and C++ compilation
 #
-CFLAGS = -MMD -O3 -Wall -ffast-math -finline-functions -fomit-frame-pointer -fstrict-aliasing $(GCCFLAGS)
-LDFLAGS = $(GCCLDFLAGS)
-EXEC = time
+CFLAGS ?= -MMD -O3 -Wall -ffast-math -finline-functions -fomit-frame-pointer -fstrict-aliasing $(GCCFLAGS)
+LDFLAGS ?= $(GCCLDFLAGS)
+EXEC ?= time
 
 # for SWIG wrappers, use these flags instead
 #
@@ -88,7 +96,7 @@ EXEC = time
 # LDFLAGS = -g -Wall $(GCCLDFLAGS)
 # EXEC = valgrind
 
-CXXFLAGS = $(CFLAGS) -Wno-deprecated
+CXXFLAGS ?= $(CFLAGS) -Wno-deprecated
 export CFLAGS
 export CXXFLAGS
 export LDFLAGS
@@ -101,11 +109,11 @@ export LDFLAGS
 #
 # PENNWSJTREEBANK must be set to the base directory of the Penn WSJ Treebank
 #
-PENNWSJTREEBANK=/usr/local/data/Penn3/parsed/mrg/wsj/
+PENNWSJTREEBANK ?= /usr/local/data/Penn3/parsed/mrg/wsj/
 
 # NPARSES is the number of alternative parses to consider for each sentence
 #
-NPARSES=50
+NPARSES ?= 50
 
 # NFOLDS is the number of folds to use, and FOLDS is a list of the numbers
 # from 00 to NFOLDS-1 (I couldn't see how to program this in make).
@@ -520,8 +528,12 @@ train-reranker: $(WEIGHTSFILEGZ)
 # $(WEIGHTSFILEGZ): $(ESTIMATOR)
 $(WEIGHTSFILEGZ): $(ESTIMATOR) $(MODELDIR)/features.gz $(FEATDIR)/train.gz $(FEATDIR)/dev.gz $(FEATDIR)/test1.gz
 	$(ESTIMATORENV) $(ZCAT) $(FEATDIR)/train.gz | $(EXEC) $(ESTIMATOR) $(ESTIMATORFLAGS) -e $(FEATDIR)/dev.gz -f $(MODELDIR)/features.gz -o $(WEIGHTSFILE) -x $(FEATDIR)/test1.gz
-	rm -f $(WEIGHTSFILEGZ)
-	gzip $(WEIGHTSFILE)
+	# If you use gzip's automagic renaming, be sure to use -f in case some backup program
+	# throws in some extra hardlinks (I'm looking at you Time Machine /.MobileBackups).
+	# gzip -f $(WEIGHTSFILE)
+	# But let's avoid that business entirely and use gzip as a filter like elsewhere in this Makefile.
+	gzip -c $(WEIGHTSFILE) >$(WEIGHTSFILEGZ)
+	rm -f $(WEIGHTSFILE)
 
 ########################################################################
 #                                                                      #
