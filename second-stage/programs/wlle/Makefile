@@ -10,58 +10,41 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-SOURCES = avper.cc cvlm-lbfgs.cc hlm.cc gavper.cc lm.cc lmdata.c oracle.cc wavper.cc wlle.cc # cvlm.cc OWLQN.cpp TerminationCriterion.cpp
+SOURCES = avper.cc cobyla.cc cvlm-lbfgs.cc hlm.cc gavper.cc lm.cc lmdata.c oracle.cc wavper.cc wlle.cc # cvlm.cc OWLQN.cpp TerminationCriterion.cpp
 TARGETS = avper gavper oracle cvlm-lbfgs # cvlm lm oracle wavper cvlm-owlqn hlm
 OBJECTS = $(patsubst %.cpp,%.o,$(patsubst %.l,%.o,$(patsubst %.c,%.o,$(SOURCES:%.cc=%.o))))
 
 all: $(TARGETS)
 
 lm-owlqn: lm-owlqn.o OWLQN.o TerminationCriterion.o liblmdata.a
-	$(CXX) $(LDFLAGS) $^ -o lm-owlqn
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o lm-owlqn
 
 cvlm-owlqn: cvlm-owlqn.o OWLQN.o TerminationCriterion.o liblmdata.a
-	$(CXX) $(LDFLAGS) $^ -o cvlm-owlqn
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o cvlm-owlqn
 
-cvlm-lbfgs: cvlm-lbfgs.o liblmdata.a cobyla.o
-	$(CXX) $(LDFLAGS) $^ -L/usr/local/lib -llbfgs -o cvlm-lbfgs
+cvlm-lbfgs: liblmdata.a cobyla.o
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -llbfgs $^ cvlm-lbfgs.cc -o cvlm-lbfgs
 
 hlm: hlm.o OWLQN.o TerminationCriterion.o liblmdata.a
-	$(CXX) $(LDFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
 
 avper: avper.o liblmdata.a
-	$(CXX) $(LDFLAGS) $^ -o $@ 
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@ 
 
 gavper: gavper.o liblmdata.a 
-	$(CXX) $(LDFLAGS) $^ -o $@ 
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@ 
 
 wavper: wavper.o liblmdata.a
-	$(CXX) $(LDFLAGS) $^ -o $@ 
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@ 
 
 oracle: liblmdata.a oracle.o
-	$(CXX) $(LDFLAGS) oracle.o liblmdata.a -o oracle
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) oracle.o liblmdata.a -o oracle
 
 libdata.a: data.o
 	ar rcv libdata.a data.o; ranlib libdata.a
 
 liblmdata.a: lmdata.o
 	ar rcv liblmdata.a lmdata.o; ranlib liblmdata.a
-
-CC=gcc
-
-# fast options
-# Compilation help: you may need to remove -march=native on older compilers.
-GCCFLAGS=-march=native -mfpmath=sse -msse2 -mmmx
-FOPENMP=-fopenmp
-CFLAGS=-MMD -O3 -ffast-math -fstrict-aliasing -Wall -finline-functions $(GCCFLAGS) $(FOPENMP)
-LDFLAGS=$(FOPENMP)
-CXXFLAGS=${CFLAGS} -Wno-deprecated
-
-# debugging options
-# GCCFLAGS=
-# FOPENMP=
-# CFLAGS=-MMD -O0 -g $(GCCFLAGS) $(FOPENMP)
-# LDFLAGS=-g $(FOPENMP)
-# CXXFLAGS=${CFLAGS} -Wno-deprecated
 
 .PHONY: real-clean
 real-clean: clean
