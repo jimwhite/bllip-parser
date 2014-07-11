@@ -522,11 +522,14 @@ train-reranker: $(WEIGHTSFILEGZ)
 # This goal estimates the reranker feature weights (i.e., trains the
 # reranker).
 #
+# Don't use auto-renaming as in "gzip foo" because it fails if there is
+# more than one hardlink on the file (I'm looking at you Time Machine!).
+#
 # $(WEIGHTSFILEGZ): $(ESTIMATOR)
 $(WEIGHTSFILEGZ): $(ESTIMATOR) $(MODELDIR)/features.gz $(FEATDIR)/train.gz $(FEATDIR)/dev.gz $(FEATDIR)/test1.gz
 	$(ESTIMATORENV) $(ZCAT) $(FEATDIR)/train.gz | $(EXEC) $(ESTIMATOR) $(ESTIMATORFLAGS) -e $(FEATDIR)/dev.gz -f $(MODELDIR)/features.gz -o $(WEIGHTSFILE) -x $(FEATDIR)/test1.gz
-	rm -f $(WEIGHTSFILEGZ)
-	gzip $(WEIGHTSFILE)
+	gzip -c $(WEIGHTSFILE) >$(WEIGHTSFILEGZ)
+	rm -f $(WEIGHTSFILE)
 
 ########################################################################
 #                                                                      #
