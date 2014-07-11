@@ -10,8 +10,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-SOURCES = avper.cc cvlm-lbfgs.cc hlm.cc gavper.cc lm.cc lmdata.c oracle.cc wavper.cc wlle.cc # cvlm.cc OWLQN.cpp TerminationCriterion.cpp
-TARGETS = avper gavper oracle cvlm-lbfgs # cvlm lm oracle wavper cvlm-owlqn hlm
+SOURCES = avper.cc hlm.cc gavper.cc lm.cc lmdata.c oracle.cc wavper.cc wlle.cc cvlm-owlqn.cc OWLQN.cpp TerminationCriterion.cpp # cvlm-lbfgs.cc cvlm.cc 
+TARGETS = avper gavper oracle cvlm-owlqn # cvlm-lbfgs # cvlm lm oracle wavper cvlm-owlqn hlm
 OBJECTS = $(patsubst %.cpp,%.o,$(patsubst %.l,%.o,$(patsubst %.c,%.o,$(SOURCES:%.cc=%.o))))
 
 all: $(TARGETS)

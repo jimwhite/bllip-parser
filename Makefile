@@ -106,7 +106,7 @@ export CXX
 #
 # PENNWSJTREEBANK must be set to the base directory of the Penn WSJ Treebank
 #
-PENNWSJTREEBANK=/usr/local/data/Penn3/parsed/mrg/wsj/
+PENNWSJTREEBANK ?= /usr/local/data/Penn3/parsed/mrg/wsj/
 
 # NPARSES is the number of alternative parses to consider for each sentence
 #
@@ -195,6 +195,9 @@ FEATURESNICKNAME=sp
 # of these variable values can be found in the train-eval-reranker.sh
 # script.
 #
+
+ifndef USE_OLD_NONLBFGS_ESTIMATOR
+# Newer estimator that depends on liblbfgs:
 ESTIMATOR=second-stage/programs/wlle/cvlm-lbfgs
 
 # ESTIMATORFLAGS are flags given to the estimator
@@ -204,6 +207,22 @@ ESTIMATORFLAGS=-l 1 -c 10 -F 1 -n -1 -p 2
 # ESTIMATORNICKNAME is used to name the feature weights file
 #
 ESTIMATORNICKNAME=lbfgs-l1c10F1n1p2
+
+else
+# Older estimator that doesn't depend on liblbfgs:
+ESTIMATOR=second-stage/programs/wlle/cvlm-owlqn
+
+# ESTIMATORFLAGS are flags given to the estimator
+#
+# These flags are for cvlm-owlqn:
+ESTIMATORFLAGS=-l 1 -c 10 -F 1 -d 10 -n -1
+# The equivalent ESTIMATORFLAGS for cvlm:
+#   ESTIMATORFLAGS=-l 1 -c0 10 -Pyx_factor 1 -debug 10 -ns -1
+
+# ESTIMATORNICKNAME is used to name the feature weights file
+#
+ESTIMATORNICKNAME=cvlm-l1c10P1
+endif
 
 # ESTIMATORSTACKSIZE is the size (in KB) of the per-thread stacks
 # used during estimation
