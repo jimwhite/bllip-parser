@@ -15,10 +15,17 @@ from cmd import Cmd
 import nltk.tree
 try:
     import nltk.draw.tree
-    have_tree_drawing = True
+    have_tree_drawing = False
     read_nltk_tree = nltk.tree.Tree.parse
+    have_tree_drawing = True
 except ImportError:
     have_tree_drawing = False
+except AttributeError:
+    try:
+        read_nltk_tree = nltk.tree.Tree.fromstring
+        have_tree_drawing = True
+    except AttributeError:
+        have_tree_drawing = False
 
 from bllipparser.RerankingParser import RerankingParser
 
@@ -72,7 +79,7 @@ class ParsingShell(Cmd):
             print 'reranker score:', item.reranker_score
             print 'parser rank:   ', item.parser_rank
             print 'parser score:  ', item.parser_score
-            print item.ptb_parse.toStringPrettyPrint()
+            print item.ptb_parse.pretty_string()
             print
         print
 
@@ -104,7 +111,7 @@ class ParsingShell(Cmd):
             print 'reranker score:', item.reranker_score
             print 'parser rank:   ', item.parser_rank
             print 'parser score:  ', item.parser_score
-            print item.ptb_parse.toStringPrettyPrint()
+            print item.ptb_parse.pretty_string()
             tree = str(item.ptb_parse)
             tree = tree.replace('S1', 'S1-r%d-p%d' % (i, item.parser_rank))
             nltk_trees.append(read_nltk_tree(tree))
@@ -147,14 +154,14 @@ class ParsingShell(Cmd):
         reranker_top_parse = nbest_list[0]
 
         if reranker_top_parse.parser_rank == 0:
-            print parser_top_parse.ptb_parse.toStringPrettyPrint()
+            print parser_top_parse.ptb_parse.pretty_string()
         else:
             print "Parser's parse:"
-            print parser_top_parse.ptb_parse.toStringPrettyPrint()
+            print parser_top_parse.ptb_parse.pretty_string()
             print
             print "Reranker's parse: (parser index %d)" % \
                 reranker_top_parse.parser_rank
-            print reranker_top_parse.ptb_parse.toStringPrettyPrint()
+            print reranker_top_parse.ptb_parse.pretty_string()
         print
 
     def got_nbest_list(self, nbest_list):
@@ -164,7 +171,7 @@ class ParsingShell(Cmd):
     def parse(self, text):
         if text.strip(): # if no text, return the last nbest list
             nbest_list = self.rrp.parse(text)
-            print 'Tokens:', ' '.join(nbest_list.get_tokens())
+            print 'Tokens:', ' '.join(nbest_list.tokens())
             print
             self.got_nbest_list(nbest_list)
 
