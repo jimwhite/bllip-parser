@@ -31,7 +31,7 @@
 #
 # The following high-level goals may also be useful:
 #
-# make nbestrain-clean # removes temporary files used in nbesttrain
+# make nbesttrain-clean # removes temporary files used in nbesttrain
 # make nbest-oracle    # oracle evaluation of n-best results 
 # make features        # extracts features from 20-fold parses
 # make train-reranker  # trains reranker model
@@ -116,8 +116,7 @@ export LDFLAGS
 #
 # PENNWSJTREEBANK must be set to the base directory of the Penn WSJ Treebank
 #
-# PENNWSJTREEBANK=/usr/local/data/Penn3/parsed/mrg/wsj/
-PENNWSJTREEBANK=/corpora/LDC/LDC99T42/RAW/parsed/mrg/wsj
+PENNWSJTREEBANK=/usr/local/data/Penn3/parsed/mrg/wsj/
 
 # NPARSES is the number of alternative parses to consider for each sentence
 #
@@ -206,16 +205,18 @@ FEATURESNICKNAME=sp
 # of these variable values can be found in the train-eval-reranker.sh
 # script.
 #
-ESTIMATOR=second-stage/programs/wlle/cvlm-lbfgs
+ESTIMATOR=second-stage/programs/wlle/cvlm-owlqn
 
 # ESTIMATORFLAGS are flags given to the estimator
 #
-ESTIMATORFLAGS=-l 1 -c 10 -F 1 -n -1 -p 2
+# These flags are for cvlm-owlqn:
+ESTIMATORFLAGS=-l 1 -c 10 -F 1 -d 10 -n -1
+# The equivalent ESTIMATORFLAGS for cvlm:
+#   ESTIMATORFLAGS=-l 1 -c0 10 -Pyx_factor 1 -debug 10 -ns -1
 
 # ESTIMATORNICKNAME is used to name the feature weights file
 #
-# ESTIMATORNICKNAME=lbfgs-l1c10F1n1p2
-ESTIMATORNICKNAME=cvlm-lbfgs
+ESTIMATORNICKNAME=cvlm-l1c10P1
 
 # ESTIMATORSTACKSIZE is the size (in KB) of the per-thread stacks
 # used during estimation
