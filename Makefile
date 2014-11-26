@@ -74,20 +74,20 @@
 
 # Must use export because otherwise second-stage/programs/wlle/Makefile doesn't get the message.
 
-GCCFLAGS = -m64 -march=core2 -mfpmath=sse
+GCCFLAGS ?= -m64 -march=core2 -mfpmath=sse
 export GCCFLAGS
 
 # CC = condor_compile gcc
-CC = gcc
+CC ?= gcc
 export CC
 
 # CXX = condor_compile g++
-CXX = g++
+CXX ?= g++
 export CXX
 
 # CFLAGS is used for all C and C++ compilation
 #
-CFLAGS = -MMD -O3 -Wall -ffast-math -finline-functions -fomit-frame-pointer -fstrict-aliasing $(GCCFLAGS)
+CFLAGS ?= -MMD -O3 -Wall -ffast-math -finline-functions -fomit-frame-pointer -fstrict-aliasing $(GCCFLAGS)
 
 EXEC = time
 
