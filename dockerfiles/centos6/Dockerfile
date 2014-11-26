@@ -23,6 +23,9 @@ RUN	wget https://dl.fedoraproject.org/pub/fedora/linux/development/rawhide/sourc
 WORKDIR /home
 RUN git clone https://github.com/BLLIP/bllip-parser.git && \
 	cd bllip-parser && \
+	git checkout OWLQN && \
 	make 
+
+WORKDIR /home/bllip-parser
 
 CMD [ "/bin/bash" ]

@@ -1,85 +1,30 @@
-// cvlm.cc -- A linear model estimator that uses a variety of loss functions.
-//            It sets the regularizer parameters using cross-validation.
-//
-// Mark Johnson, 11th April 2005, last modified 21st Nov 2007
-//
-// This is a version of wlle.cc reworked to use the tao-optimizer.h
-// routines (so most of the Petsc/Tao junk is now moved out of this
-// file).  It also sets regularizer factors by cross-validation.
-// It writes out the weights file after each cross-validation estimation.
-//
-// This optimizier uses the TAO constrained optimization method tao_blmvm
-// to avoid the variable discontinuity at zero if the -cv flag is set.
-//
-// For each variable x[i] in the original problem we introduce a pair of
-// variables xp[i] and xn[i] and a pair of constraints xp[i] >= 0, xn[i] <= 0.
-// Then x[i] = xp[i] + xn[i].
-//
-// The regularized function Q that is optimized is:
-//
-//  Q(xp,xn) = s * ( L(xp+xn) + R(xp,xn) )
-//
-// where s is a user-specified parameter, L is the unregularized loss 
-// function and R is the regularizer:
-//
-//  R(xp,xn) = c * sum_i (pow(fabs(xp[i]),p) + pow(fabs(xn[i]),p))
-//
-// where c and p are user-specifier adjustable parameters.  (The fabs()
-// is there just in case the optimization routine temporarily proposes an
-// infeasible solution).
-//
-// Note that
-//
-//  d Q/d xp[i] = s * d L/ d xp[i] + s * c * p * sum_i pow(fabs(xp[i]),p-1) * sign(xp[i])
-//
-// where sign(xp[i]) is +1 if xp[i] is non-negative and -1 otherwise.
-//
-// Change log:
-//
-// 20th April, 2004: the regularizer weights disjunctive features proportial
-// to the number of disjuncts they contain
-//
+// cvlm-owlqn.cc -- A linear model estimator for a variety of user-selectable loss functions.
+
 const char usage[] =
-"cvlm version of 21st November 2007\n"
+"cvlm-owlqn -- A cross-validating linear model estimator for a variety of user-selectable loss functions.\n"
 "\n"
-"	A constrained-variable weighted linear model estimator\n"
-"	with regularizer factors set by cross-validation.\n"
+" Mark Johnson, 21st July 2008\n"
 "\n"
-"cvlm estimates feature weights that estimate the parameters of a\n"
-"linear model by minimizing a regularized loss of the feature\n"
-"weights using the LVLM or BLVLM optimizer from the Petsc/Tao\n"
-"optimization package (see http://www-fp.mcs.anl.gov/tao/ for details).\n"
-"It can deal with partially labeled data (i.e., training instances\n"
-"consist of one or more \"winners\" and one or more \"losers\").\n"
+" It uses a modified version of L-BFGS developed by Galen Andrew at Microsoft Research\n"
+" to be especially efficient for L1-regularized loss functions.\n"
 "\n"
-"Usage: cvlm [-help] [-debug debug_level] [-c0 c0] [-c00 c00] [-p p] [-r r] [-s s] [-cv] \n"
-"              [-l ltype] [-Pyx_factor f] [-Px_propto_g] [-max-nrounds maxnrounds] \n"
-"              [-o weights-file]  [-e eval-file] [-x eval-file2]\n"
-"              [-ns ns] [-f feat-file]\n"
-"              tao-options*\n"
-"	       < train-file\n"
+" The regularizer weight(s) are set by cross-validation on development data.\n"
+"\n"
+"Usage: cvlm-owlqn [-h] [-d debug_level] [-c c0] [-C c00] [-p p] [-r r] [-s s] [-t tol]\n"
+"                  [-l ltype] [-F f] [-G] [-n ns] [-f feat-file]\n"
+"                  [-o weights-file]  [-e eval-file] [-x eval-file2]\n"
+"	           < train-file\n"
 "\n"
 "where:\n"
 "\n"
 " debug_level > 0 controls the amount of output produced\n"
 "\n"
-" c0 is the initial value for the regularizer constant, and the weight of the regularizer\n"
-" constant for the first feature class is multiplied by c00\n"
+" -c c0 is the initial value for the regularizer constant.\n"
 "\n"
-" train-file, eval-file and eval-file2 are files from which training and evaluation\n"
-" data are read (if eval-file ends in the suffix .bz2 then bzcat is used\n"
-" to read it; if no eval-file is specified, then the program tests on the\n"
-" training data),\n"
+" -C c00 multiplies the regularizer constant for the first feature class\n"
+" by c00 (this can be used to allow the first feature class to be regularized less).\n"
 "\n"
-" weights-file is a file to which the estimated weights are written,\n"
-"\n"
-" feat-file is a file of <featclass> <featuredetails> lines, used for\n"
-" cross-validating regularizer weights,\n"
-"\n"
-" ns is the number of ':' characters to use to define the cross-validation\n"
-" classes,\n" 
-"\n"
-" ltype identifies the type of loss function used:\n"
+" -l ltype identifies the type of loss function used:\n"
 "\n"
 "    -l 0 - log loss (c0 ~ 5)\n"
 "    -l 1 - EM-style log loss (c0 ~ 5)\n"
@@ -88,31 +33,36 @@ const char usage[] =
 "    -l 4 - log exp loss (c0 ~ 1e-4)\n"
 "    -l 5 - maximize expected F-score (c ~ ?)\n"
 "\n"
-" ns is the maximum number of ':' characters in a <featclass>, used to\n"
+" -r r specifies that the weights are initialized to random values in\n"
+"   [-r ... +r],\n"
+"\n"
+" -t tol specifies the stopping tolerance for the IWLQN optimizer\n"
+"\n"
+" -F f indicates that a parse should be taken as correct\n"
+"   proportional to f raised to its f-score, and\n"
+"\n"
+" -G indicates that each sentence is weighted by the number of\n"
+"   edges in its gold parse.\n"
+"\n"
+" -n ns is the maximum number of ':' characters in a <featclass>, used to\n"
 " determine how features are binned into feature classes (ns = -1 bins\n"
 " all features into the same class)\n"
 "\n"
-" r specifies that the weights are initialized to random values in\n"
-"   [-r ... +r],\n"
+" -f feat-file is a file of <featclass> <featuredetails> lines, used for\n"
+" cross-validating regularizer weights,\n"
 "\n"
-" -Pyx_factor f indicates that a parse should be taken as correct\n"
-"   proportional to f raised to its f-score, and\n"
+" train-file, eval-file and eval-file2 are files from which training and evaluation\n"
+" data are read (if eval-file ends in the suffix .bz2 then bzcat is used\n"
+" to read it; if no eval-file is specified, then the program tests on the\n"
+" training data),\n"
 "\n"
-" -Px_propto_g indicates that each sentence is weighted by the number of\n"
-"   edges in its gold parse.\n"
-"\n"
-" -max-nrounds maxnrounds specifies that at most maxnrounds of cross-validation\n"
-"   is to be performed.\n"
+" weights-file is a file to which the estimated weights are written,\n"
 "\n"
 "The function that the program minimizes is:\n"
 "\n"
 "   Q(w) = s * (- L(w) + c * sum_j pow(fabs(w[j]), p) ), where:\n"
 "\n"
 "   L(w) is the loss function to be optimized.\n"
-"\n"
-"The -cv option instructs the program to optimize a function defined in\n"
-"terms of vectors of variables u[] and v[], where w[j] = u[j] + v[j]\n"
-"and v[j] <= 0 <= u[j], otherwise it optimizes the w[j] directly.\n"
 "\n"
 "With debug = 0, the program writes a single line to stdout:\n"
 "\n"
@@ -148,7 +98,6 @@ const char usage[] =
 #include "custom_allocator.h"    // must come first
 #define _GLIBCPP_CONCEPT_CHECKS  // uncomment this for checking
 
-#include <boost/lexical_cast.hpp>
 #include <cassert>
 #include <cctype>
 #include <cerrno>
@@ -157,12 +106,15 @@ const char usage[] =
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include <unistd.h>
 #include <vector>
 
 #include "lmdata.h"
 #include "powell.h"
 #include "utility.h"
-#include "tao-optimizer.h"
+
+#include "OWLQN.h"
+#include "TerminationCriterion.h"
 
 typedef std::vector<double> doubles;
 typedef std::vector<size_t> size_ts;
@@ -202,9 +154,9 @@ void print_histogram(int nx, const double x[], int nbins=20) {
 // f_df() evaluates the statistics of the corpus, and prints the f-score
 //  if required
 //
-double f_df(loss_type ltype, corpus_type* corpus, double x[], double df_dx[]) {
+double f_df(loss_type ltype, corpus_type* corpus, const double x[], double df_dx[]) {
   Float sum_g = 0, sum_p = 0, sum_w = 0, L = 0;
-  
+
   switch (ltype) {
   case log_loss:
     L = corpus_stats(corpus, &x[0], &df_dx[0], &sum_g, &sum_p, &sum_w);
@@ -233,7 +185,7 @@ double f_df(loss_type ltype, corpus_type* corpus, double x[], double df_dx[]) {
     L = 0;
     std::cerr << "## Error: unrecognized loss_type loss = " << int(ltype) 
 	      << std::endl;
-  }
+  }  
   
   if (debug_level >= 1000)
     std::cerr << "f score = " << 2*sum_w/(sum_g+sum_p) << ", " << std::flush;
@@ -242,10 +194,11 @@ double f_df(loss_type ltype, corpus_type* corpus, double x[], double df_dx[]) {
   return L;
 }
 
-
-// Unconstrained is for unconstrained optimization
+// LossFn() is the loss function
 //
-struct Unconstrained {
+class LossFn : public DifferentiableFunction {
+public:
+
   const loss_type ltype;
   corpus_type* corpus;
   const size_ts& f_c;	//!< feature -> cross-validation class
@@ -254,8 +207,8 @@ struct Unconstrained {
   int it;
   double L, R, Q;
 
-  Unconstrained(loss_type ltype, corpus_type* corpus, const size_ts& f_c, 
-		const doubles& cs, double p, double s) 
+  LossFn(loss_type ltype, corpus_type* corpus, const size_ts& f_c, 
+	 const doubles& cs, double p, double s) 
     : ltype(ltype), corpus(corpus), f_c(f_c), cs(cs), p(p), s(s), it(0) 
   { 
     assert(f_c.size() == corpus->nfeatures);
@@ -263,29 +216,37 @@ struct Unconstrained {
       assert(f_c[f] < cs.size());
   }
 
-  double operator() (int nx, double x[], double df_dx[]) {
+  virtual double Eval(const DblVec& x, DblVec& df_dx) {
+    size_t nx = x.size();
+
+    assert(size_t(nx) == corpus->nfeatures);
+    assert(f_c.size() == corpus->nfeatures);
+
     it++;
     if (debug_level >= 1000)      
       std::cerr << "it = " << it << ", " << std::flush;
 
-    L = f_df(ltype, corpus, x, df_dx);
+    L = f_df(ltype, corpus, &x[0], &df_dx[0]);
 
     if (s != 1) {
       L *= s;
 
-      for (int i = 0; i < nx; ++i) {
+      for (size_t i = 0; i < nx; ++i) {
 	assert(finite(df_dx[i]));
 	df_dx[i] *= s;
       }
     }
 
-    assert(size_t(nx) == corpus->nfeatures);
-    assert(f_c.size() == corpus->nfeatures);
-
     R = 0;
-    for (int i = 0; i < nx; ++i) 
-      R +=  cs[f_c[i]] * pow(fabs(x[i]), p);
-    R *= s;
+    if (p != 1) {
+      for (size_t i = 0; i < nx; ++i) 
+	R +=  cs[f_c[i]] * pow(fabs(x[i]), p);
+      R *= s;
+      double sp = s * p;
+      for (size_t i = 0; i < nx; ++i) 
+	df_dx[i] += sp * cs[f_c[i]] * pow(fabs(x[i]), p-1) 
+	  * (x[i] >= 0 ? (x[i] == 0 ? 0 : 1) : -1);
+    }
 
     Q = L + R;
     
@@ -294,100 +255,18 @@ struct Unconstrained {
 
     assert(finite(Q));
     
-    double sp = s * p;
-    for (int i = 0; i < nx; ++i) 
-      df_dx[i] += sp * cs[f_c[i]] * pow(fabs(x[i]), p-1) 
-	* (x[i] >= 0 ? (x[i] == 0 ? 0 : 1) : -1);
-
     if (debug_level >= 10000) {
       std::cerr << "Histogram of derivatives:" << std::endl;
       print_histogram(nx, &df_dx[0]);
       std::cerr << "--------------------------" << std::endl;
     }
 
-    for (int i = 0; i < nx; ++i)
+    for (size_t i = 0; i < nx; ++i)
       assert(finite(df_dx[i]));
     return Q;
-  }   // Unconstrained::operator()
+  }   // LossFn::operator()
 
-};  // Unconstrained{}
-
-
-// Constrained{} for the constrained optimization.
-//
-struct Constrained {
-  const loss_type ltype;
-  corpus_type* corpus;
-  const size_ts& f_c;	//!< feature -> cross-validation class
-  const doubles& cs;	//!< cross-validation class -> regularizer factor
-  double p, s;
-  int it;
-  doubles x, df_dx;
-  double L, R, Q;
-
-  Constrained(loss_type ltype, corpus_type* corpus, const size_ts& f_c, 
-	      const doubles& cs, double p, double s) 
-    : ltype(ltype), corpus(corpus), f_c(f_c), cs(cs), p(p), s(s), it(0),
-      x(corpus->nfeatures, 0), df_dx(corpus->nfeatures) { 
-    assert(f_c.size() == corpus->nfeatures);
-    for (size_type f = 0; f < f_c.size(); ++f)
-      assert(f_c[f] < cs.size());
-  }
-
-  double operator() (int nx2, double x2[], double df_dx2[]) {
-    it++;
-    if (debug_level >= 1000)      std::cerr << "it = " << it << ", " << std::flush;
-    
-    size_type nx = corpus->nfeatures;
-    assert(nx2 = 2 * nx);
-    assert(x.size() == nx);
-    for (size_type i = 0; i < nx; ++i) {
-      assert(finite(x2[i]));
-      assert(finite(x2[i+nx]));
-      x[i] = x2[i] + x2[i+nx];
-      assert(finite(x[i]));
-    }
-
-    L = f_df(ltype, corpus, &x[0], &df_dx[0]);
-    
-    L *= s;
-
-    for (size_type i = 0; i < nx; ++i) {
-      assert(finite(df_dx[i]));
-      df_dx2[i] = df_dx2[i+nx] = s * df_dx[i];
-    }
-
-    R = 0;
-    for (size_type i = 0; i < nx; ++i)
-      R += cs[f_c[i]] * pow(fabs(x2[i]), p) + pow(fabs(x2[i+nx]), p);
-    R *= s;
-
-    Q = L + R;
-    
-    if (debug_level >= 1000)
-      std::cerr << "Q = " << Q << " = L = " << L << " + R = " << R << std::endl;
-
-    assert(finite(Q));
-    
-    double sp = s * p;
-    for (size_type i = 0; i < nx; ++i) {
-      df_dx2[i] += sp * cs[f_c[i]] * pow(fabs(x2[i]), p-1) * (x2[i] >= 0 ? 1 : -1);
-      df_dx2[i+nx] += sp * cs[f_c[i]] * pow(fabs(x2[i+nx]), p-1) * (x2[i+nx] > 0 ? 1 : -1);
-    }
-
-    if (debug_level >= 10000) {
-      std::cerr << "Histogram of derivatives:" << std::endl;
-      print_histogram(nx, &df_dx[0]);
-      std::cerr << "--------------------------" << std::endl;
-    }
-
-    for (int i = 0; i < nx2; ++i)
-      assert(finite(df_dx2[i]));
-    return Q;
-  }   // Constrained::operator()
-
-};  // Constrained{}
-
+};  // LossFn{}
 
 // The Estimator1 does one round of estimation
 //
@@ -405,7 +284,7 @@ struct Estimator1 {
   double p;		//!< regularizer power
   double r;		//!< random initialization
   double s;		//!< scale factor
-  bool cv;		//!< use constrained variables
+  double tol;           //!< stopping tolerance
   bool opt_fscore;	//!< optimize f-score or - log likelihood
 
   doubles x;		//!< feature -> weight
@@ -416,7 +295,6 @@ struct Estimator1 {
   size_type nits;	//!< number of iterations of last round
   size_type sum_nits;	//!< total number of iterations
   size_type nrounds;	//!< number of cross-validation rounds so far
-  size_type max_nrounds; //!< number of cross-validation rounds to perform
   double best_score;    //!< best score seen so far
   std::string weightsfile; //!< name of weights file
 
@@ -425,13 +303,13 @@ struct Estimator1 {
   typedef std::vector<std::string> Ss;
   Ss regclass_identifiers; //!< vector of class identifiers
 
-  Estimator1(loss_type ltype, double c0, double c00, double p, double r, double s, bool cv, 
-	     bool opt_fscore = true, size_type max_nrounds = 0, const char* weightsfile = NULL) 
+  Estimator1(loss_type ltype, double c0, double c00, double p, double r, double s,
+	     double tol=1e-5, bool opt_fscore = true, std::string weightsfile = "") 
     : train(NULL), nx(0), eval(NULL), eval2(NULL),
-      ltype(ltype), c0(c0), c00(c00), p(p), r(r), s(s), cv(cv), 
-      opt_fscore(opt_fscore), x(nx), f_c(nx), lcs(1, log(c0)), nc(1), 
-      nits(0), sum_nits(0), nrounds(0), max_nrounds(max_nrounds), best_score(0),
-      weightsfile(weightsfile == NULL ? "" : weightsfile)
+      ltype(ltype), c0(c0), c00(c00), p(p), r(r), s(s), tol(tol), 
+      opt_fscore(opt_fscore), lcs(1, log(c0)), nc(1), 
+      nits(0), sum_nits(0), nrounds(0), best_score(0),
+      weightsfile(weightsfile)
   { }  // Estimator1::Estimator1()
 
   //! set_data() sets the training and evaluation data
@@ -466,55 +344,27 @@ struct Estimator1 {
 	std::cerr << "# round	nfeval	L	R	Q	neglogP	f-score	css" << std::endl;
       std::cerr << nrounds << std::flush;
     }
-    if (cv) {
+ 
+    LossFn fn(ltype, train, f_c, ccs, p, s);
 
-      // Constrained variable optimization
+    DblVec x0(nx);
 
-      Constrained fn(ltype, train, f_c, ccs, p, s);
-      tao_constrained_optimizer<Constrained> tao_opt(2*nx, fn);
-
-      if (r != 0) 
-	for (size_type i = 0; i < 2*nx; ++i)
-	  tao_opt[i] = r*double(random()-RAND_MAX/2)/double(RAND_MAX/2);
-    
-      for (size_type i = 0; i < nx; ++i) {
-	tao_opt.lower_bound[i] = 0;
-	tao_opt.lower_bound[i+nx] = TAO_NINFINITY;
-	tao_opt.upper_bound[i] = TAO_INFINITY;
-	tao_opt.upper_bound[i+nx] = 0;
-      }
-      
-      tao_opt.optimize();
-    
-      nits = fn.it;
-      L = fn.L;
-      R = fn.R;
-      Q = fn.Q;
-
+    if (r != 0) 
       for (size_type i = 0; i < nx; ++i)
-	x[i] = tao_opt[i] + tao_opt[i+nx];
+	x0[i] = r*double(random()-RAND_MAX/2)/double(RAND_MAX/2);
+    
+    OWLQN owlqn(true);
+    if (p == 1) {
+      assert(ccs.size() == 1);
+      owlqn.Minimize(fn, x0, x, ccs[0], tol);
     }
-    else {
+    else
+      owlqn.Minimize(fn, x0, x, 0, tol);      
       
-      // Unconstrained optimization
-      
-      Unconstrained fn(ltype, train, f_c, ccs, p, s);
-      tao_optimizer<Unconstrained> tao_opt(nx, fn);
-
-      if (r != 0) 
-	for (size_type i = 0; i < nx; ++i)
-	  tao_opt[i] = r*double(random()-RAND_MAX/2)/double(RAND_MAX/2);
-      
-      tao_opt.optimize();
-      
-      nits = fn.it;
-      L = fn.L;
-      R = fn.R;
-      Q = fn.Q;
-
-      for (size_type i = 0; i < nx; ++i)
-	x[i] = tao_opt[i];
-    }
+    nits = fn.it;
+    L = fn.L;
+    R = fn.R;
+    Q = fn.Q;
 
     // Clean up, collect stats
 
@@ -659,7 +509,7 @@ struct Estimator1 {
       command += filename;
       in = popen(command.c_str(), "r");
       if (in == NULL) {
-	perror("## Error in lm-owlqn: ");
+	perror("## Error in cvlm-owlqn: ");
 	std::cerr << "## popen(\"" << command << "\", \"r\") failed, usage = " << resource_usage() << std::endl;
       }
       popen_flag = true;
@@ -670,7 +520,7 @@ struct Estimator1 {
       errno = 0;
       in = popen(command.c_str(), "r");
       if (in == NULL) {
-	perror("## Error in lm-owlqn: ");
+	perror("## Error in cvlm-owlqn: ");
 	std::cerr << "## popen(\"" << command << "\", \"r\") failed, usage = " << resource_usage() << std::endl;
       }
       popen_flag = true;
@@ -739,18 +589,12 @@ struct Estimator1 {
       pclose(in);
     else
       fclose(in);
-  }  // Estimator1::read_featureclasses() 
+  }  // Estimator1::read_featureclasses()
     
-  void estimate()
+  void estimate(const int maxruns=10)
   {
-    if (max_nrounds == 1) 
-      operator()(lcs);
-    else {
-      if(max_nrounds == 0)
-	max_nrounds = (lcs.size() > 1) ? 11 : 51;
-      powell::control cntrl(1e-4, 1e-2, 0, max_nrounds);
-      powell::minimize(lcs, *this, log(2), cntrl);
-    }
+    powell::control cntrl(1e-4, 1e-2, maxruns, maxruns);
+    powell::minimize(lcs, *this, log(2), cntrl);
 
     if (debug_level > 0) {
       std::cerr << "# Regularizer class weights = (";
@@ -766,79 +610,131 @@ struct Estimator1 {
 
 };  // Estimator1{}
 
+//! exit_failure() causes the program to halt immediately
+//
+inline std::ostream& exit_failure(std::ostream& os) {
+  os << std::endl;
+  exit(EXIT_FAILURE);
+  return os;
+}  // util::exit_failure
 
 int main(int argc, char** argv) 
 {
-  errno = 0;
-
   std::ios::sync_with_stdio(false);
 
-  // Initialize TAO and PETSc
-
-  tao_environment tao_env(argc, argv);
-
-  if (tao_env.get_bool_option("-help") || tao_env.get_bool_option("--help")) {
-    std::cerr << "-help\n" << usage << std::endl;
-    exit(EXIT_SUCCESS);
-  }
-
-  debug_level = tao_env.get_int_option("-debug", debug_level);
-  loss_type ltype = loss_type(tao_env.get_int_option("-l", 0));
-  double c0 = tao_env.get_double_option("-c0", 2.0);
-  double c00 = tao_env.get_double_option("-c00", 1.0);
-  double p = tao_env.get_double_option("-p", 2.0);
-  double r = tao_env.get_double_option("-r", 0.0);
-  double s = tao_env.get_double_option("-s", 1.0);
-  bool cv = tao_env.get_bool_option("-cv");
-  double Pyx_factor = tao_env.get_double_option("-Pyx_factor", 0.0);
-  bool Px_propto_g = tao_env.get_bool_option("-Px_propto_g");
-  size_type max_nrounds = tao_env.get_int_option("-max-nrounds", 0);
+  loss_type ltype = log_loss;
+  double c0 = 2.0;
+  double c00 = 1.0;
+  double p = 2.0;
+  double r = 0.0;
+  double s = 1.0;
+  double tol = 1e-5;
+  double Pyx_factor = 0.0;
+  bool Px_propto_g = false;
+  int maxruns = 10;
+  int nseparators = 1;
+  std::string  feat_file, weights_file, eval_file, eval2_file;
+  int opt;
+  while ((opt = getopt(argc, argv, "hd:c:C:p:r:s:t:l:F:Gm:n:f:o:e:x:")) != -1) 
+    switch (opt) {
+    case 'h':
+      std::cerr << usage << exit_failure;
+      break;
+    case 'd':
+      debug_level = atoi(optarg);
+      break;
+    case 'c':
+      c0 = atof(optarg);
+      break;
+    case 'C':
+      c00 = atof(optarg);
+      break;
+    case 'p':
+      p = atof(optarg);
+      break;
+    case 'r':
+      r = atof(optarg);
+      break;
+    case 's':
+      s = atof(optarg);
+      break;
+    case 't':
+      tol = atof(optarg);
+      break;
+    case 'l':
+      ltype = loss_type(atoi(optarg));
+      break;
+    case 'F':
+      Pyx_factor = atof(optarg);
+      break;
+    case 'G':
+      Px_propto_g = true;
+      break;
+    case 'm':
+      maxruns = atoi(optarg);
+      break;
+    case 'n':
+      nseparators = atoi(optarg);
+      break;
+    case 'f':
+      feat_file = optarg;
+      break;
+    case 'o':
+      weights_file = optarg;
+      break;
+    case 'e':
+      eval_file = optarg;
+      break;
+    case 'x':
+      eval2_file = optarg;
+      break;
+    }
 
   if (debug_level >= 10)
-    std::cerr << "#  ltype = " << ltype
+    std::cerr << "#  ltype -l = " << ltype
 	      << " (" << loss_type_name[ltype] << ")"
-	      << ", regularization c0 = " << c0
-	      << ", c00 = " << c00
-	      << ", power p = " << p 
-	      << ", scale s = " << s
-	      << "; random init r = " << r 
-	      << ", constrained var optimization cv = " << cv
-	      << ", Pyx_factor = " << Pyx_factor
-	      << ", Px_propto_g = " << Px_propto_g
-	      << ", max_nrounds = " << max_nrounds
+	      << " regularization -c = " << c0
+	      << ", c00 -C = " << c00
+	      << ", power -p = " << p 
+	      << ", scale -s = " << s
+	      << ", tol -t = " << tol
+	      << ", random init -r = " << r 
+	      << ", Pyx_factor -F = " << Pyx_factor
+	      << ", Px_propto_g -G = " << Px_propto_g
+	      << ", maxruns -m = " << maxruns
+	      << ", nseparators -n = " << nseparators
+	      << ", feat_file -f = " << feat_file
+	      << ", weights_file -o = " << weights_file
+	      << ", eval_file -e = " << eval_file
+	      << ", eval2_file -x = " << eval2_file
 	      << std::endl;
 
   // I discovered a couple of years after I wrote this program that popen
   // uses fork, which doubles your virtual memory for a short instant!
 
-  Estimator1 e(ltype, c0, c00, p, r, s, cv, true,
-	       max_nrounds, tao_env.get_cstr_option("-o"));
+  Estimator1 e(ltype, c0, c00, p, r, s, tol, true, weights_file);
 
-  int nseparators = tao_env.get_int_option("-ns", 1);
-  const char* filename = tao_env.get_cstr_option("-f");
-  if (filename != NULL)
-    e.read_featureclasses(filename, nseparators, ":");  
+  if (!feat_file.empty())
+    e.read_featureclasses(feat_file.c_str(), nseparators, ":");  
 
   // Read in eval data first, as that way we may squeeze everything into 4GB
-
+    
   corpusflags_type corpusflags = { Pyx_factor, Px_propto_g };
-  
+
   corpus_type* evaldata = NULL;
-  const char* evalfile = tao_env.get_cstr_option("-e");
-  if (evalfile != NULL) {
-    evaldata = read_corpus_file(&corpusflags, evalfile);
+  if (!eval_file.empty()) {
+    evaldata = read_corpus_file(&corpusflags, eval_file.c_str());
     if (debug_level >= 10)
-      std::cerr << "# read evalfile = " << evalfile 
+      std::cerr << "# read eval_file = " << eval_file 
 		<< ", nsentences = " << evaldata->nsentences
 		<< std::endl;
   }
 
   corpus_type* evaldata2 = NULL;
-  const char* evalfile2 = tao_env.get_cstr_option("-x");
-  if (evalfile2 != NULL) {
-    evaldata2 = read_corpus_file(&corpusflags, evalfile2);
+  if (!eval2_file.empty()) {
+    evaldata2 = read_corpus_file(&corpusflags, eval2_file.c_str());
     if (debug_level >= 10)
-      std::cerr << "# read evalfile2 = " << evalfile2 
+      std::cerr << "# read eval2_file = " << eval2_file
 		<< ", nsentences = " << evaldata2->nsentences
 		<< std::endl;
   }
@@ -847,7 +743,7 @@ int main(int argc, char** argv)
   int nx = traindata->nfeatures;
 
   if (errno != 0) {
-    perror("## cvlm, after reading main corpus, nonzero errno  ");
+    perror("## cvlm-owlqn, after reading main corpus, nonzero errno  ");
     errno = 0;
   }
 
@@ -857,6 +753,6 @@ int main(int argc, char** argv)
     evaldata = traindata;
 
   e.set_data(traindata, evaldata, evaldata2);
-  e.estimate();
+  e.estimate(maxruns);
 
 }  // main()

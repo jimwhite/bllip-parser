@@ -346,12 +346,7 @@ int read_sentence(corpusflags_type *flags, FILE *in, sentence_type *s,
 
   for (i = 0; i < s->nparses; ++i) {
     read_parse(in, &s->parse[i], fmax);
-    // handle the admittedly strange case where a parse has no brackets
-    if (s->parse[i].w == 0.0 || s->parse[i].p == 0.0) {
-      fscore = 0.0;
-    } else {
-      fscore = 2 * s->parse[i].w/(s->parse[i].p+s->g);
-    }
+    fscore = 2 * s->parse[i].w/(s->parse[i].p+s->g);
     if (fscore+DATAFLOAT_EPS >= best_fscore) {
       Float logprob = feature_value(&s->parse[i], 0); // logprob is feature 0
       if (fabs(fscore-best_fscore) < 2*DATAFLOAT_EPS) {
@@ -371,13 +366,6 @@ int read_sentence(corpusflags_type *flags, FILE *in, sentence_type *s,
     }
   }
 
-  // skip sentences where the best f-score was 0 since there's nothing to learn from them
-  if (best_fscore == 0.0) {
-    best_fscore = -1;
-    best_logprob = -DATAFLOAT_MAX;
-    best_fscore_index = -1;
-    nwinners = 0;
-  }
   if (best_fscore_index >= 0) {  /* is there a winner? */
     Float sum_Pyx = 0;
     assert(nwinners > 0);
@@ -417,11 +405,7 @@ int read_sentence(corpusflags_type *flags, FILE *in, sentence_type *s,
     s->correct_index = s->nparses;
     for (i = 0; i < s->nparses; ++i)
       s->parse[i].Pyx = 0.0;
-    /* We used to ensure that s->nparses == 0 here, but 
-       instead do nothing since read_corpus now knows to
-       skip these sentences.  These sentences show up
-       when we have parse failures and the parser returns
-       a flat bracketing. */
+    assert(s->nparses == 0);     /* if there is a parse, then there should be a winner */
   }
 
   return s->nparses;
@@ -458,12 +442,6 @@ corpus_type *read_corpus(corpusflags_type *flags, FILE *in) {
       assert(c->sentence != NULL);
     }
     assert(i < nsentences);
-
-    /* skip sentences with no winners but some parses -- these are
-       typically parse failures. */
-    if (s.Px == 0.0 && s.nparses != 0)
-      continue;
-
     c->sentence[i++] = s;
     sum_g += s.g;
     if (s.Px > 0)
@@ -718,10 +696,8 @@ Float emll_corpus_stats(corpus_type *c, const Float w[], Float dL_dw[],
 # pragma omp parallel default(shared)
   {
     int j;
-    /* Float score[c->maxnparses]; 
-       Float local_dL_dw[c->nfeatures]; */ /* works, but stack needs to be very large */
-    Float *local_dL_dw = MALLOC(c->nfeatures*sizeof(Float));
-    Float *score = MALLOC(c->maxnparses*sizeof(Float));
+    Float score[c->maxnparses];
+    Float local_dL_dw[c->nfeatures];
     Float local_sum_g = 0, local_sum_p = 0, local_sum_w = 0, local_neglogP = 0;
 
     for (j = 0; j < c->nfeatures; ++j)
@@ -732,8 +708,6 @@ Float emll_corpus_stats(corpus_type *c, const Float w[], Float dL_dw[],
       local_neglogP += emll_sentence_stats(&c->sentence[j], w, score, local_dL_dw, 
 					   &local_sum_g, &local_sum_p, &local_sum_w);
 
-    FREE(score);
-
 # pragma omp critical (lmdata_emll_corpus_stats)
     {
       neglogP += local_neglogP;
@@ -743,49 +717,18 @@ Float emll_corpus_stats(corpus_type *c, const Float w[], Float dL_dw[],
       for (j = 0; j < c->nfeatures; ++j)
 	dL_dw[j] += local_dL_dw[j];
     }
-    
-    FREE(local_dL_dw);
   }  /* pragma omp parallel */
 #else
   {
-    /* Float score[c->maxnparses]; */
-    Float *score = MALLOC(c->maxnparses*sizeof(Float));
+    Float score[c->maxnparses];
 
     for (i = 0; i < c->nsentences; ++i)    /* collect stats from sentences */
       neglogP += emll_sentence_stats(&c->sentence[i], w, score, dL_dw, 
 				     sum_g, sum_p, sum_w);
-
-    FREE(score);
   }
 #endif
   return neglogP;
 }  /* emll_corpus_stats() */
-
-/*! emll_corpus_stats_noomp() returns the EM-like log loss - E_P~(x)[log E_w[P~|x]],
- *!  sets dL_dw[f] to its derivative, sets the precision/recall scores,
- *!  and increments ncorrect.  It is just like emll_corpus_stats() except that
- *! it does not call OpenMP.
- */
-
-Float emll_corpus_stats_noomp(corpus_type *c, const Float w[], Float dL_dw[], 
-			      Float *sum_g, Float *sum_p, Float *sum_w) 
-{
-  Float neglogP = 0;
-  int i;
-
-  *sum_g = *sum_p = *sum_w = 0;          /* zero precision/recall counters */
-  for (i = 0; i < c->nfeatures; ++i)     /* zero dL_dw[] */
-    dL_dw[i] = 0;
-
-  {
-    Float *score = MALLOC(c->maxnparses*sizeof(Float));
-    for (i = 0; i < c->nsentences; ++i)    /* collect stats from sentences */
-      neglogP += emll_sentence_stats(&c->sentence[i], w, score, dL_dw, 
-				     sum_g, sum_p, sum_w);
-    FREE(score);
-  }
-  return neglogP;
-}  /* emll_corpus_stats_noomp() */
 
 
 /***********************************************************************

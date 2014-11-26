@@ -1,15 +1,3 @@
-// Licensed under the Apache License, Version 2.0 (the "License"); you may
-// not use this file except in compliance with the License.  You may obtain
-// a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
-// License for the specific language governing permissions and limitations
-// under the License.
-
 // utility.h
 //
 // (c) Mark Johnson, 24th January 2005
@@ -894,29 +882,40 @@ inline std::ostream& operator<< (std::ostream& os, const boost::shared_ptr<T>& s
 struct resource_usage { };
 
 #ifndef __i386
+#define NO_PROC_SELF_STAT
+#endif
+
+#ifdef __APPLE__
+#define NO_PROC_SELF_STAT
+#endif
+
+#ifdef NO_PROC_SELF_STAT
 inline std::ostream& operator<< (std::ostream& os, resource_usage r)
 {
-  return os;
+  return os << "no stats.";
 }
 #else // Assume we are on a 586 linux
 inline std::ostream& operator<< (std::ostream& os, resource_usage r)
 {
   FILE* fp = fopen("/proc/self/stat", "r");
-  assert(fp);
-  int utime;
-  int stime;
-  unsigned int vsize;
-  unsigned int rss;
-  int result = 
-    fscanf(fp, "%*d %*s %*c %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %d %d %*d %*d %*d %*d"
-           "%*u %*u %*d %u %u", &utime, &stime, &vsize, &rss);
-  assert(result == 4);
-  fclose(fp);
-  // s << "utime = " << utime << ", stime = " << stime << ", vsize = " << vsize << ", rss = " << rss
-;
-  // return s << "utime = " << utime << ", vsize = " << vsize;
-  return os << "utime " << float(utime)/1.0e2 << "s, vsize " 
-	    << float(vsize)/1048576.0 << " Mb.";
+  // Don't fail if we can't read that (such as on a Mac), just return.
+  if (fp == NULL) {
+     return os << "null stats.";
+  } else {
+    int utime;
+    int stime;
+    unsigned int vsize;
+    unsigned int rss;
+    int result = 
+      fscanf(fp, "%*d %*s %*c %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %d %d %*d %*d %*d %*d"
+             "%*u %*u %*d %u %u", &utime, &stime, &vsize, &rss);
+    assert(result == 4);
+    fclose(fp);
+    // s << "utime = " << utime << ", stime = " << stime << ", vsize = " << vsize << ", rss = " << rss;
+    // return s << "utime = " << utime << ", vsize = " << vsize;
+    return os << "utime " << float(utime)/1.0e2 << "s, vsize " 
+	      << float(vsize)/1048576.0 << " Mb.";
+  }
 }
 #endif
 
