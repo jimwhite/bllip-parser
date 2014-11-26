@@ -21,7 +21,7 @@ RUN	wget https://dl.fedoraproject.org/pub/fedora/linux/development/rawhide/sourc
 
 # Get and build the BLLIP parser (but not training programs - leave that to next image).
 WORKDIR /home
-RUN git clone https://github.com/BLLIP/bllip-parser.git && \
+RUN git clone https://github.com/jimwhite/bllip-parser.git && \
 	cd bllip-parser && \
 	git checkout OWLQN && \
 	make 
