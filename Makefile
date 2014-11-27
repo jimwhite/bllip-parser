@@ -74,15 +74,16 @@
 
 # Must use export because otherwise second-stage/programs/wlle/Makefile doesn't get the message.
 
-GCCFLAGS ?= -m64 -march=core2 -mfpmath=sse
-export GCCFLAGS
+#GCCFLAGS = -m64 -march=native -mfpmath=sse
+GCCFLAGS = -m64 -mfpmath=sse
+export CCFLAGS
 
 # CC = condor_compile gcc
-CC ?= gcc
+CC = gcc
 export CC
 
 # CXX = condor_compile g++
-CXX ?= g++
+CXX = g++
 export CXX
 
 # CFLAGS is used for all C and C++ compilation
@@ -103,15 +104,10 @@ EXEC = time
 # LDFLAGS = -g -Wall $(GCCLDFLAGS)
 # EXEC = valgrind
 
-CXXFLAGS ?= $(CFLAGS) -Wno-deprecated
+CXXFLAGS = $(CFLAGS) -Wno-deprecated
 export CFLAGS
 export CXXFLAGS
 export LDFLAGS
-
-CC ?= gcc
-CXX ?= g++
-export CC
-export CXX
 
 # Building the 20-fold training data with nbesttrain 
 # --------------------------------------------------
