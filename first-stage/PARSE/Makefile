@@ -36,7 +36,7 @@ CFLAGS ?= -Wall -O3
 # CFLAGS=-g
 
 .C.o:
-	$(CXX) $(CFLAGS) -c $<
+	$(CC) $(CFLAGS) -c $<
 
 # all binaries need these
 COMMON_OBJS = \

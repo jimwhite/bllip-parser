@@ -23,61 +23,61 @@ extract-nmfeatures.o: extract-nmfeatures.cc
 	$(CXX) -c $(CXXFLAGS) $(FOPENMP) $< -o $@
 
 extract-nmfeatures: extract-nmfeatures.o heads.o read-tree.o sym.o
-	$(CXX) $(LDFLAGS) $(FOPENMP) $^ -o $@
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(FOPENMP) $^ -o $@
 
 best-nmparses.o: best-nmparses.cc
 	$(CXX) -c $(CXXFLAGS) $(FOPENMP) $< -o $@
 
 best-nmparses: best-nmparses.o heads.o read-tree.o sym.o
-	$(CXX) $(LDFLAGS) $(FOPENMP) $^ -o $@
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(FOPENMP) $^ -o $@
 
 extract-spmfeatures.o: extract-spmfeatures.cc
 	$(CXX) -c $(CXXFLAGS) $(FOPENMP) $< -o $@
 
 extract-spmfeatures: extract-spmfeatures.o heads.o read-tree.o sym.o
-	$(CXX) $(LDFLAGS) $(FOPENMP) $^ -o $@
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(FOPENMP) $^ -o $@
 
 best-spmparses.o: best-spmparses.cc
 	$(CXX) -c $(CXXFLAGS) $(FOPENMP) $< -o $@
 
 best-spmparses: best-spmparses.o heads.o read-tree.o sym.o
-	$(CXX) $(LDFLAGS) $(FOPENMP) $^ -o $@
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(FOPENMP) $^ -o $@
 
 extract-spmultifeatures: extract-spmultifeatures.o heads.o read-tree.o sym.o
-	$(CXX) $(LDFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
 
 extract-nmultifeatures: extract-nmultifeatures.o heads.o read-tree.o sym.o
-	$(CXX) $(LDFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
 
 extract-spfeatures: extract-spfeatures.o heads.o read-tree.o sym.o
-	$(CXX) $(LDFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
 
 extract-splhfeatures: extract-splhfeatures.o heads.o read-tree.o sym.o
-	$(CXX) $(LDFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
 
 extract-nfeatures: extract-nfeatures.o heads.o read-tree.o sym.o
-	$(CXX) $(LDFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
 
 best-parses: best-parses.o heads.o read-tree.o sym.o
-	$(CXX) $(LDFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
 
 best-splhparses: best-splhparses.o heads.o read-tree.o sym.o
-	$(CXX) $(LDFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
 
 oracle-score: oracle-score.o read-tree.o sym.o
-	$(CXX) $(LDFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
 
 count-spfeatures: count-spfeatures.o heads.o read-tree.o sym.o
-	$(CXX) $(LDFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
 
 parallel-extract-spfeatures: parallel-extract-spfeatures.o heads.o read-tree.o sym.o
-	$(CXX) $(LDFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
 
 count-nfeatures: count-nfeatures.o heads.o read-tree.o sym.o
-	$(CXX) $(LDFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
 
 parallel-extract-nfeatures: parallel-extract-nfeatures.o heads.o read-tree.o sym.o
-	$(CXX) $(LDFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
 
 parallel-tools: $(PARALLEL_TOOLS_TARGETS)
 

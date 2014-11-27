@@ -37,28 +37,28 @@ SOURCES = copy-trees.cc copy-trees-ss.cc prepare-data.cc prepare-ec-data.cc prep
 OBJECTS = $(patsubst %.l,%.o,$(patsubst %.c,%.o,$(SOURCES:%.cc=%.o)))
 
 copy-trees: copy-trees.o read-tree.o sym.o
-	$(CXX) $(LDFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
 
 copy-trees-ss: copy-trees-ss.o read-tree.o sym.o
-	$(CXX) $(LDFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
 
 prepare-ec-data: prepare-ec-data.o sym.o
-	$(CXX) $(LDFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
 
 prepare-ec-data100: prepare-ec-data100.o sym.o
-	$(CXX) $(LDFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
 
 prepare-new-data: prepare-new-data.o read-tree.o sym.o
-	$(CXX) $(LDFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
 
 prepare-data: prepare-data.o read-tree.o sym.o
-	$(CXX) $(LDFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
 
 prepare-data-michael: prepare-data-michael.o read-tree.o sym.o
-	$(CXX) $(LDFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
 
 ptb: ptb.o sym.o
-	$(CXX) $(LDFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
 
 read-tree.cc: read-tree.l
 	flex -oread-tree.cc read-tree.l

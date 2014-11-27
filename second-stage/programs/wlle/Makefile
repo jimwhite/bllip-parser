@@ -17,28 +17,28 @@ OBJECTS = $(patsubst %.cpp,%.o,$(patsubst %.l,%.o,$(patsubst %.c,%.o,$(SOURCES:%
 all: $(TARGETS)
 
 lm-owlqn: lm-owlqn.o OWLQN.o TerminationCriterion.o liblmdata.a
-	$(CXX) $(LDFLAGS) $^ -o lm-owlqn
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o lm-owlqn
 
 cvlm-owlqn: cvlm-owlqn.o OWLQN.o TerminationCriterion.o liblmdata.a
-	$(CXX) $(LDFLAGS) $^ -o cvlm-owlqn
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o cvlm-owlqn
 
 cvlm-lbfgs: cvlm-lbfgs.o liblmdata.a cobyla.o
-	$(CXX) $(LDFLAGS) $^ -L/usr/local/lib -llbfgs -o cvlm-lbfgs
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -L/usr/local/lib -llbfgs -o cvlm-lbfgs
 
 hlm: hlm.o OWLQN.o TerminationCriterion.o liblmdata.a
-	$(CXX) $(LDFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
 
 avper: avper.o liblmdata.a
-	$(CXX) $(LDFLAGS) $^ -o $@ 
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@ 
 
 gavper: gavper.o liblmdata.a 
-	$(CXX) $(LDFLAGS) $^ -o $@ 
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@ 
 
 wavper: wavper.o liblmdata.a
-	$(CXX) $(LDFLAGS) $^ -o $@ 
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@ 
 
 oracle: liblmdata.a oracle.o
-	$(CXX) $(LDFLAGS) oracle.o liblmdata.a -o oracle
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) oracle.o liblmdata.a -o oracle
 
 libdata.a: data.o
 	ar rcv libdata.a data.o; ranlib libdata.a
